@@ -35,10 +35,10 @@
 *.i*86
 *.x86_64
 *.hex
-console
-cpu
-kernel
-memoria
+**/consola
+**/cpu
+**/kernel
+**/memoria
 
 # Debug files
 *.dSYM/
