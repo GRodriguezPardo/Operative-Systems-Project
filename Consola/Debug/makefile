@@ -48,7 +48,7 @@ consola: $(OBJS) $(USER_OBJS) makefile objects.mk $(OPTIONAL_TOOL_DEPS)
 
 # Other Targets
 clean:
-	-$(RM) client
+	-$(RM) consola
 	-@echo ' '
 
 .PHONY: all clean dependents main-build
