@@ -1,11 +1,9 @@
-#include<stdio.h>
-#include "../../Libreria/tcp_client.c"
-#include "commons/log.h"
-#include "../../Libreria/tcp_serializacion.c"
-#include "commons/config.h"
+#include<commons/log.h>
+#include<commons/config.h>
 #include<stdio.h>
 #include<stdlib.h>
 #include<sys/socket.h>
+#include<thesenate/tcp_serializacion.h>
 
 int main(int argc, char** argv[]){
     //archivo config
@@ -21,7 +19,3 @@ int main(int argc, char** argv[]){
 
     return 0;
 }
-
-
-
-
