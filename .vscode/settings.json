@@ -4,6 +4,9 @@
         "config.h": "c",
         "tcp_serializacion.h": "c",
         "socket.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "readline.h": "c",
+        "string.h": "c",
+        "pthread.h": "c"
     }
 }

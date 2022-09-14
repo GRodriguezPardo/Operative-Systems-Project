@@ -1,8 +1,13 @@
 #ifndef TCP_SERIALIZACION_H_
 #define TCP_SERIALIZACION_H_
 
-typedef enum
+typedef enum op_code
 {
+    // EJEMPLOS
+    MENSAJE,
+    RESPUESTA,
+
+    // OPERACIONES
     SET,
     ADD,
     MOV_IN,
