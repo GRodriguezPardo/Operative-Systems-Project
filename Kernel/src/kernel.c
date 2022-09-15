@@ -6,6 +6,7 @@
 #include <string.h>
 #include <thesenate/tcp_serializacion.h>
 #include <thesenate/tcp_server.h>
+#include <thesenate/tcp_client.h>
 #include "kernel.h"
 
 int main()
@@ -29,8 +30,10 @@ int main()
     {
         perror("Error: Cpu_interrupt thread failed.");
     }
-
-    iniciar_servidor("127.0.0.1", "8000", consola_routine);
+    char* puertoServidor = config_get_string_value(config, "PUERTO_ESCUCHA");
+    char* ipKernel = config_get_string_value(config,"IP_KERNEL");
+    
+    iniciar_servidor(ipKernel, puertoServidor, consola_routine);
 
     return 0;
 }
@@ -84,13 +87,85 @@ void *memoria_routine(void *config)
 
 void *cpu_dispatch_routine(void *config)
 {
+    char* puertoServidor = config_get_string_value(config, "PUERTO_CPU_DISPATCH");
+    char* ipCPU = config_get_string_value(config,"IP_CPU");
+    int socket = crear_conexion(ipCPU,puertoServidor);
+    op_code codigo_operacion;
+    int tamaño_paquete;
+    void *msg;
+    char *input = "hola";
+    t_paquete *paquete;
     int *return_status = (int*)malloc(sizeof(int));
     *return_status = 0;
+
+    paquete = crear_paquete(MENSAJE);
+    agregar_a_paquete(paquete, (void *)input, strlen(input) + 1);
+    enviar_paquete(paquete, socket);
+    eliminar_paquete(paquete);
+
+    printf("\nMensaje enviado.\nEsperando respuesta...\n");
+
+    codigo_operacion = recibir_operacion(socket);
+    tamaño_paquete = largo_paquete(socket);
+
+    switch (codigo_operacion)
+    {
+        case RESPUESTA:
+            msg = recibir(socket);
+            printf("Recibi la respuesta: %s\n", (char *)msg);
+            free(msg);
+            break;
+        default:
+            perror("Recibí una operacion inesperada. Terminando programa.");
+            liberar_conexion(socket);
+            *return_status = 1;
+            pthread_exit(return_status);
+            break;
+    }
+    
+    printf("Terminando programa.\n");
+    liberar_conexion(socket);
     pthread_exit(return_status);
 }
 void *cpu_interrupt_routine(void *config)
 {
+    char* puertoServidor = config_get_string_value(config, "PUERTO_CPU_INTERRUPT");
+    char* ipCPU = config_get_string_value(config,"IP_CPU");
+    int socket = crear_conexion(ipCPU,puertoServidor);
+    op_code codigo_operacion;
+    int tamaño_paquete;
+    void *msg;
+    char *input = "hola";
+    t_paquete *paquete;
     int *return_status = (int*)malloc(sizeof(int));
     *return_status = 0;
+
+    paquete = crear_paquete(MENSAJE);
+        agregar_a_paquete(paquete, (void *)input, strlen(input) + 1);
+        enviar_paquete(paquete, socket);
+        eliminar_paquete(paquete);
+
+        printf("\nMensaje enviado.\nEsperando respuesta...\n");
+
+        codigo_operacion = recibir_operacion(socket);
+        tamaño_paquete = largo_paquete(socket);
+
+        switch (codigo_operacion)
+        {
+            case RESPUESTA:
+                msg = recibir(socket);
+                printf("Recibi la respuesta: %s\n", (char *)msg);
+                free(msg);
+                break;
+            default:
+                perror("Recibí una operacion inesperada. Terminando programa.");
+                liberar_conexion(socket);
+                *return_status = 1;
+                pthread_exit(return_status);
+                break;
+        }
+    
+    printf("Terminando programa.\n");
+    liberar_conexion(socket);
     pthread_exit(return_status);
 }
