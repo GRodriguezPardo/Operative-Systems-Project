@@ -68,8 +68,14 @@ void *consola_routine(void *socket)
 
                 free(msg);
                 break;
+            case -1:
+                perror("Recibi OP_CODE = 0.");
+                *return_status = 1;
+                pthread_exit(return_status);
+                break;
             default:
                 perror("Recibí una operacion inesperada. Terminando programa.\n");
+                printf("%d",codigo_operacion);
                 *return_status = 1;
                 pthread_exit(return_status);
                 break;          
@@ -116,9 +122,13 @@ void *cpu_dispatch_routine(void *config)
             printf("Recibi la respuesta: %s\n", (char *)msg);
             free(msg);
             break;
+        case -1:
+            perror("Recibi OP_CODE = 0.");
+            *return_status = 1;
+            pthread_exit(return_status);
+            break;
         default:
             perror("Recibí una operacion inesperada. Terminando programa.");
-            liberar_conexion(socket);
             *return_status = 1;
             pthread_exit(return_status);
             break;
@@ -144,6 +154,7 @@ void *cpu_interrupt_routine(void *config)
 
     paquete = crear_paquete(MENSAJE);
         agregar_a_paquete(paquete, (void *)input, strlen(input) + 1);
+        printf("\nMensaje enviado.\nEsperando respuesta...\n");
         enviar_paquete(paquete, socket);
         eliminar_paquete(paquete);
 

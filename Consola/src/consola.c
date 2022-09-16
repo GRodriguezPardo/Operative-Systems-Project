@@ -18,11 +18,11 @@ int main(int argc, char **argv)
     // archivo config
     printf("hola");
     t_config *config = config_create("../consola.config");
-    FILE* archivo= fopen("../instrucciones.txt","r"); //abrir archivo en argv 2
+    /*FILE* archivo= fopen("../instrucciones.txt","r"); //abrir archivo en argv 2
     printf("abrio los archivos");
     if(archivo == NULL){
         return 0;
-    }
+    }*/
     // parseo de lineas de comando,
     char* PUERTO_KERNEL = config_get_string_value(config, "PUERTO_KERNEL");
     char* IP_KERNEL = config_get_string_value(config,"IP_KERNEL");
@@ -37,9 +37,9 @@ int main(int argc, char **argv)
     char* linea;
     t_paquete *paquete;
 
-    while(fscanf(archivo,"%s\n",linea) != EOF){
-        printf(linea);
-    }
+    //while(fscanf(archivo,"%s\n",linea) != EOF){
+      //  printf(linea);
+    //}
 
     input = readline("> ");
     while (strcmp(input, ""))
