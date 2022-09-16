@@ -14,19 +14,19 @@ int main()
     pthread_t memoria, cpu_dispatch, cpu_interrupt;
 
     t_config *config;
-    config = config_create("kernel.config");
+    config = config_create("../kernel.config");
 
-    if (pthread_create(&memoria, NULL, memoria_routine, (void *)&config) < 0)
+    if (pthread_create(&memoria, NULL, memoria_routine, (void *) config) < 0)
     {
         perror("Error: Memoria thread failed."); // cambiar a los logs
     }
 
-    if (pthread_create(&cpu_dispatch, NULL, cpu_dispatch_routine, (void *)&config) < 0)
+    if (pthread_create(&cpu_dispatch, NULL, cpu_dispatch_routine, (void *) config) < 0)
     {
         perror("Error: Cpu_dispatch thread failed."); // cambiar a los logs
     }
 
-    if (pthread_create(&cpu_interrupt, NULL, cpu_interrupt_routine, (void *)&config) < 0)
+    if (pthread_create(&cpu_interrupt, NULL, cpu_interrupt_routine, (void *) config) < 0)
     {
         perror("Error: Cpu_interrupt thread failed.");
     }

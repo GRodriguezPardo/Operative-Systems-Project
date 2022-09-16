@@ -7,22 +7,39 @@
 #include <thesenate/tcp_client.h>
 #include <thesenate/tcp_serializacion.h>
 
+
+struct  instrucciones{
+    char* instruccion;
+    int segmentos[];
+};
+
 int main(int argc, char **argv)
 {
     // archivo config
-
-    t_config *config = config_create(argv[1]);
-    // file* archivo= fopen(argv[2],) abrir archivo en argv 2
+    printf("hola");
+    t_config *config = config_create("../consola.config");
+    FILE* archivo= fopen("../instrucciones.txt","r"); //abrir archivo en argv 2
+    printf("abrio los archivos");
+    if(archivo == NULL){
+        return 0;
+    }
     // parseo de lineas de comando,
+    char* PUERTO_KERNEL = config_get_string_value(config, "PUERTO_KERNEL");
+    char* IP_KERNEL = config_get_string_value(config,"IP_KERNEL");
 
-    int socket = crear_conexion("127.0.0.1", "8000");
+    int socket = crear_conexion(IP_KERNEL, PUERTO_KERNEL);
     // enviar lineas parseadas y serializadas
 
     op_code codigo_operacion;
     int tamaño_paquete;
     void *msg;
     char *input;
+    char* linea;
     t_paquete *paquete;
+
+    while(fscanf(archivo,"%s\n",linea) != EOF){
+        printf(linea);
+    }
 
     input = readline("> ");
     while (strcmp(input, ""))
