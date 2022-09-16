@@ -7,37 +7,45 @@
 #include <string.h>
 #include <thesenate/tcp_serializacion.h>
 #include <thesenate/tcp_server.h>
+#include <semaphore.h>
+#include <fcntl.h>
 #include "cpu.h"
 
-
+sem_t sem;
 
 int main(){
     t_config *config;
-    config = config_create("cpu.config");
+    config = config_create("../cpu.config");
+    printf("%s\n", config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT"));
 
-     pthread_t interrupt, dispatch;
-    if (pthread_create(&interrupt, NULL, interrupt_server, (void *)&config) < 0)
+    pthread_t interrupt, dispatch;
+    if (pthread_create(&interrupt, NULL, interrupt_server, (void *) config) < 0)
     {
         perror("Error: Memoria thread failed."); // cambiar a los logs
     }
 
-    if (pthread_create(&dispatch, NULL, dispatch_server, (void *)&config) < 0)
+    if (pthread_create(&dispatch, NULL, dispatch_server, (void *) config) < 0)
     {
         perror("Error: Memoria thread failed."); // cambiar a los logs
     }
+    
+    sem_init(&sem, 1, 0);
+    sem_wait(&sem);
 
     return 0;
 }
 
 void* interrupt_server(void* config){
-    char* puertoServidor = config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT");
-    char* ipCPU = config_get_string_value(config,"IP_CPU");
+    char* puertoServidor = config_get_string_value((t_config*) config, "PUERTO_ESCUCHA_INTERRUPT");
+    char* ipCPU = config_get_string_value((t_config*) config,"IP_CPU");
+    printf("Creando server de interrupt.\n");
     iniciar_servidor(ipCPU,puertoServidor,interrupt_routine);
 }
 
 void* dispatch_server(void* config){
-    char* puertoServidor = config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH");
-    char* ipCPU = config_get_string_value(config,"IP_CPU");
+    char* puertoServidor = config_get_string_value((t_config*) config, "PUERTO_ESCUCHA_DISPATCH");
+    char* ipCPU = config_get_string_value((t_config*) config,"IP_CPU");
+    printf("Creando server de dispatch.\n");
     iniciar_servidor(ipCPU,puertoServidor,dispatch_routine);
 }
 
@@ -79,12 +87,6 @@ void *dispatch_routine(void* socket){
     }
     pthread_exit(return_status);
 }
-
-
-
-
-
-
 
 void *interrupt_routine(void* socket){
     int *return_status = (int*)malloc(sizeof(int));
