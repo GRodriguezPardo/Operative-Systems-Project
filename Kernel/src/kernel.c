@@ -80,15 +80,16 @@ void *consola_routine(void *socket)
 
 void *memoria_routine(void *config)
 {
-    int *return_status = (int*)malloc(sizeof(int));
+    /*int *return_status = (int*)malloc(sizeof(int));
     *return_status = 0;
-    pthread_exit(return_status);
+    pthread_exit(return_status);*/
+    return 0;
 }
 
 void *cpu_dispatch_routine(void *config)
 {
-    char* puertoServidor = config_get_string_value(config, "PUERTO_CPU_DISPATCH");
-    char* ipCPU = config_get_string_value(config,"IP_CPU");
+    char* puertoServidor = config_get_string_value((t_config*) config, "PUERTO_CPU_DISPATCH");
+    char* ipCPU = config_get_string_value((t_config*) config,"IP_CPU");
     int socket = crear_conexion(ipCPU,puertoServidor);
     op_code codigo_operacion;
     int tamaño_paquete;
@@ -127,10 +128,11 @@ void *cpu_dispatch_routine(void *config)
     liberar_conexion(socket);
     pthread_exit(return_status);
 }
+
 void *cpu_interrupt_routine(void *config)
 {
-    char* puertoServidor = config_get_string_value(config, "PUERTO_CPU_INTERRUPT");
-    char* ipCPU = config_get_string_value(config,"IP_CPU");
+    char* puertoServidor = config_get_string_value((t_config*) config, "PUERTO_CPU_INTERRUPT");
+    char* ipCPU = config_get_string_value((t_config*) config,"IP_CPU");
     int socket = crear_conexion(ipCPU,puertoServidor);
     op_code codigo_operacion;
     int tamaño_paquete;
