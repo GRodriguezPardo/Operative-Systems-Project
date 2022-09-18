@@ -9,12 +9,6 @@
 #include <thesenate/tcp_client.h>
 #include <thesenate/tcp_serializacion.h>
 
-struct instrucciones
-{
-    char *instruccion;
-    int segmentos[];
-};
-
 int main(int argc, char **argv)
 {
     ////////////// CONFIG //////////////
