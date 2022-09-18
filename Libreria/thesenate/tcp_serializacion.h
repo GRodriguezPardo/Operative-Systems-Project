@@ -7,6 +7,15 @@ typedef enum op_code
     MENSAJE,
     RESPUESTA,
 
+    // INICIO DE CONSOLA
+    NUEVO_PROCESO,
+
+    // OPERACIONES I/O
+    CONSOLE_INPUT,
+    CONSOLE_INPUT_RESPUESTA,
+    CONSOLE_OUTPUT,
+    CONSOLE_OUTPUT_RESPUESTA,
+
     // OPERACIONES
     SET,
     ADD,
@@ -29,17 +38,17 @@ typedef struct
 } t_paquete;
 
 //emision
-void crear_buffer(t_paquete*);
-t_paquete* crear_paquete(op_code);
-void agregar_a_paquete(t_paquete*, void*, int);
-void enviar_paquete(t_paquete*, int);
-void eliminar_paquete(t_paquete*);
+void crear_buffer(t_paquete *paquete);
+t_paquete *crear_paquete(op_code op_code);
+void agregar_a_paquete(t_paquete *paquete, void *valor, int tamanio);
+void enviar_paquete(t_paquete *paquete, int socket_cliente);
+void eliminar_paquete(t_paquete *paquete);
 
 //recepcion
-void * recibir(int);
-int recibir_operacion(int);
-int largo_paquete(int);
-void* recibir_buffer(int*, int);
-void* serializar_paquete(t_paquete*, int);
+void *recibir(int socket_cliente);
+int recibir_operacion(int socket_cliente);
+int largo_paquete(int socket_cliente);
+void *recibir_buffer(int *size, int socket_cliente);
+void *serializar_paquete(t_paquete *paquete, int bytes);
 
 #endif /* TCP_SERIALIZACION_H_ */
