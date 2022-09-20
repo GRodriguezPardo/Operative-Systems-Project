@@ -8,6 +8,10 @@
         "readline.h": "c",
         "string.h": "c",
         "pthread.h": "c",
-        "stat.h": "c"
+        "stat.h": "c",
+        "tcp_server.h": "c",
+        "memoria_routine.h": "c",
+        "consola_routine.h": "c",
+        "cpu_interrupt_routine.h": "c"
     }
 }
