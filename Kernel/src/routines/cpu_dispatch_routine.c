@@ -14,7 +14,7 @@ void *cpu_dispatch_routine(void *config)
     char* ipCPU = config_get_string_value((t_config*) config,"IP_CPU");
     int socket = crear_conexion(ipCPU,puertoServidor);
     op_code codigo_operacion;
-    int tamaño_paquete;
+    int  __attribute__((unused)) tamaño_paquete;
     void *msg;
     char *input = "hola";
     t_paquete *paquete;
