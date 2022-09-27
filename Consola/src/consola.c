@@ -56,7 +56,7 @@ int main(int argc, char **argv)
     ////////////// ESPERA DE I/O //////////////
     op_code codigo_operacion;
     int tamaño_paquete;
-    char *input = NULL, output = NULL;
+    char *input = NULL, *output = NULL;
     t_paquete *paquete = NULL;
 
     codigo_operacion = recibir_operacion(socket);
