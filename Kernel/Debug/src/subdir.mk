@@ -3,7 +3,10 @@
 ################################################################################
 
 # Add inputs and outputs from these tool invocations to the build variables 
-C_SRCS_UTILS = $(shell find ../src/routines/ -iname "*.c" | tr '\n' ' ')
+C_SRCS_UTILS += \
+../src/kernel_utils.c \
+$(shell find ../src/routines/ -iname "*.c" | tr '\n' ' ') \
+$(shell find ../src/algorithms/ -iname "*.c" | tr '\n' ' ')
 
 C_SRCS_UTILS_AUX = $(patsubst ../%,./%,$(C_SRCS_UTILS))
 
@@ -28,6 +31,13 @@ src/%.o: ../src/%.c src/subdir.mk
 	@echo ' '
 
 src/routines/%.o: ../src/routines/%.c src/subdir.mk
+	@echo 'Building file: $<'
+	@echo 'Invoking: GCC C Compiler'
+	gcc -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" -o "$@" "$<"
+	@echo 'Finished building: $<'
+	@echo ' '
+
+src/algorithms/%.o: ../src/algorithms/%.c src/subdir.mk
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C Compiler'
 	gcc -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" -o "$@" "$<"
