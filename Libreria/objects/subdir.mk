@@ -3,20 +3,13 @@
 ################################################################################
 
 # Add inputs and outputs from these tool invocations to the build variables 
-C_SRCS += \
-./thesenate/tcp_client.c \
-./thesenate/tcp_server.c \
-./thesenate/tcp_serializacion.c
+C_SRCS = $(shell find ./thesenate/ -iname "*.c" | tr '\n' ' ')
 
-C_DEPS += \
-./objects/tcp_client.d \
-./objects/tcp_server.d \
-./objects/tcp_serializacion.d
+C_SRCS_AUX = $(patsubst ./thesenate/%,./objects/%,$(C_SRCS))
 
-OBJS += \
-./objects/tcp_client.o \
-./objects/tcp_server.o \
-./objects/tcp_serializacion.o
+C_DEPS = $(C_SRCS_AUX:.c=.d)
+
+OBJS = $(C_SRCS_AUX:.c=.o)
 
 
 # Each subdirectory must supply rules for building sources it contributes
@@ -30,7 +23,7 @@ OBJS += \
 clean: clean-src
 
 clean-src:
-	-$(RM) ./objects/tcp_client.d ./objects/tcp_server.d ./objects/tcp_serializacion.d ./objects/tcp_client.o ./objects/tcp_server.o ./objects/tcp_serializacion.o
+	-$(RM) $(C_DEPS) $(OBJS)
 
 .PHONY: clean-src
 
