@@ -25,8 +25,8 @@ void *consola_routine(void *param)
     t_log *logger;
     {
         char buffer[15];
-        sprintf(buffer, "Console %d", consola_id);
-        logger = log_create("../../kernel.log", buffer, 0, LOG_LEVEL_INFO);
+        sprintf(buffer, "Kernel - Console %d", consola_id);
+        logger = log_create("../kernel.log", buffer, 0, LOG_LEVEL_INFO);
     }
 
     ////////////// RECIBIENDO OPERACION //////////////
