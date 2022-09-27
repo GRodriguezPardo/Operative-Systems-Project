@@ -12,6 +12,16 @@
         "tcp_server.h": "c",
         "memoria_routine.h": "c",
         "consola_routine.h": "c",
-        "cpu_interrupt_routine.h": "c"
+        "cpu_interrupt_routine.h": "c",
+        "log.h": "c",
+        "stdint.h": "c",
+        "semaphore.h": "c",
+        "planificador_routine.h": "c",
+        "globals.h": "c",
+        "list.h": "c",
+        "tcp_client.h": "c",
+        "queue.h": "c",
+        "kernel_utils.h": "c",
+        "cpu_dispatch_routine.h": "c"
     }
 }
