@@ -24,7 +24,7 @@ void *consola_routine(void *param)
     ////////////// CREANDO LOGGER DEL HANDLER //////////////
     t_log *logger;
     {
-        char buffer[15];
+        char buffer[25];
         sprintf(buffer, "Kernel - Console %d", consola_id);
         logger = log_create("../kernel.log", buffer, 0, LOG_LEVEL_INFO);
     }
