@@ -9,20 +9,20 @@
 #include <stdint.h>
 #include <thesenate/tcp_serializacion.h>
 
-////////////// DEFINICION DEL CONTEXTO //////////////
+
 extern pthread_mutex_t mutex_logger;
 
 extern pthread_mutex_t mutex_dispatch_response;
 
 extern pthread_mutex_t mutex_ejecucion;
-
+////////////// DEFINICION DEL CONTEXTO //////////////
 typedef struct t_contexto
 {
     uint32_t id;
     char *instrucciones;
     uint32_t program_counter;
     uint32_t registros[4];
-    //faltan segmentos
+    uint32_t segmentos[4][2];
 } t_contexto;
 
 #endif 

@@ -23,7 +23,9 @@
         "queue.h": "c",
         "kernel_utils.h": "c",
         "cpu_dispatch_routine.h": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "fcntl.h": "c",
+        "cpu_utils.h": "c"
     },
     "C_Cpp.errorSquiggles": "Enabled"
 }

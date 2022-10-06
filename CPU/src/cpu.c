@@ -14,13 +14,14 @@
 #include "cpu.h"
 
 
-
+sem_t sem;
+t_contexto mi_contexto;
 int main(){
     t_config *config;
     config = config_create("../cpu.config");
     printf("%s\n", config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT"));
     t_log *logger = log_create("./cpu.log", "CPU - Main", 0, LOG_LEVEL_INFO);
-
+    init_globals_cpu();
     pthread_t interrupt, dispatch, executer;
     if (pthread_create(&interrupt, NULL, interrupt_server, (void *) config) < 0)
     {
@@ -63,7 +64,7 @@ void* ciclo_instruccion(void* config){//hace falta el config?
     }
     ////////////// CHECK INTERRUPT //////////////
     {
-        
+
     }
 }
 
@@ -138,7 +139,19 @@ void *dispatch_routine(void* socket){
             tamanio_restante -=32;
         }
         ////////////// Recibiendo Segmentos //////////////
-        //ayuda
+        uint32_t segmentos[4][2];
+        {
+            for(size_t i = 0;i<4;i++){
+                msg = recibir(socket_dispatch);
+                segmentos[i][0] = *((uint32_t *)msg);//tamanio
+                free(msg);
+                msg = NULL;
+                msg = recibir(socket_dispatch);
+                segmentos[i][1] = *((uint32_t *)msg);//numero tabla paginas
+                free(msg);
+                msg = NULL;
+            }
+        }
         ////////////// Recibiendo Instrucciones//////////////
         char **instrucciones;
         uint32_t cantidad = 0;
@@ -164,6 +177,10 @@ void *dispatch_routine(void* socket){
             for(size_t i = 0;i<4;i++){
                 mi_contexto->registros[i] = registros[i];
             }
+            for(size_t i = 0;i<4;i++){
+                mi_contexto->segmentos[i][0] = segmentos[i][0];
+                mi_contexto->segmentos[i][1] = segmentos[i][1];
+            }
         }
 
         pthread_mutex_unlock(&mutex_ejecucion);
@@ -175,7 +192,11 @@ void *dispatch_routine(void* socket){
         agregar_a_paquete(paquete,(void *)mi_contexto->program_counter,sizeof(uint32_t));
         for(size_t i = 0; i<4;i++)
         {
-            agregar_a_paquete(paquete,(void *)mi_contexto->registros,sizeof(uint32_t));
+            agregar_a_paquete(paquete,(void *)mi_contexto->registros[i],sizeof(uint32_t));
+        }
+        for(size_t i = 0; i<4; i++){
+            agregar_a_paquete(paquete,(void *)mi_contexto->segmentos[i][0],sizeof(uint32_t));
+            agregar_a_paquete(paquete,(void *)mi_contexto->segmentos[i][1],sizeof(uint32_t));
         }
         for(size_t i = 0;i<cantidad;i++){
             agregar_a_paquete(paquete,(void *)mi_contexto->instrucciones[i],strlen(mi_contexto->instrucciones[i])+1);

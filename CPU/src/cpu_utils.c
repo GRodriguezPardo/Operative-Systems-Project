@@ -14,8 +14,7 @@ void init_globals_cpu()
     pthread_mutex_init(&mutex_logger, NULL);
     pthread_mutex_init(&mutex_dispatch_response, NULL);
     pthread_mutex_init(&mutex_ejecucion, NULL);
-    sem_t sem;
-    t_contexto *mi_contexto=(t_contexto*)malloc(sizeof(t_contexto));;
+    mi_contexto=(t_contexto*)malloc(sizeof(t_contexto));
 
 }
 
