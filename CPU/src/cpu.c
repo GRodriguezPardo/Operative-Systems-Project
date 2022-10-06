@@ -13,7 +13,7 @@
 #include "cpu_utils.h"
 #include "cpu.h"
 
-sem_t sem;
+
 
 int main(){
     t_config *config;
@@ -21,7 +21,7 @@ int main(){
     printf("%s\n", config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT"));
     t_log *logger = log_create("./cpu.log", "CPU - Main", 0, LOG_LEVEL_INFO);
 
-    pthread_t interrupt, dispatch;
+    pthread_t interrupt, dispatch, executer;
     if (pthread_create(&interrupt, NULL, interrupt_server, (void *) config) < 0)
     {
         perror("Error: Memoria thread failed."); // cambiar a los logs
@@ -32,11 +32,39 @@ int main(){
         perror("Error: Memoria thread failed."); // cambiar a los logs
     }
     
+    if (pthread_create(&executer, NULL,ciclo_instruccion, (void *) config) < 0)
+    {
+        perror("Error: ciclo instruccion thread failed."); // cambiar a los logs
+    }
+
     sem_init(&sem, 1, 0);
     sem_wait(&sem);
     finalizar_cpu(config,logger);
 
     return 0;
+}
+
+void* ciclo_instruccion(void* config){//hace falta el config?
+    pthread_mutex_lock(&mutex_ejecucion);
+    ////////////// FETCH //////////////
+    char* instruccion;
+    {
+        instruccion = mi_contexto->instrucciones[mi_contexto->program_counter];
+        mi_contexto->program_counter++;
+    }
+    ////////////// DECODE //////////////
+    //AIUDA
+    {
+
+    }
+    ////////////// EXECUTE //////////////
+    {
+
+    }
+    ////////////// CHECK INTERRUPT //////////////
+    {
+        
+    }
 }
 
 void* interrupt_server(void* config){
@@ -128,7 +156,7 @@ void *dispatch_routine(void* socket){
             }
         }
         ////////////// Creando contexto //////////////
-        t_contexto *mi_contexto = (t_contexto*)malloc(sizeof(t_contexto));
+        
         {
             mi_contexto->id = id;
             mi_contexto->program_counter = pc;
@@ -138,6 +166,7 @@ void *dispatch_routine(void* socket){
             }
         }
 
+        pthread_mutex_unlock(&mutex_ejecucion);
         ////////////// Esperando para enviar contexto //////////////
         pthread_mutex_lock(&mutex_dispatch_response);//este mutex devuelve el contexto
         logger_cpu_info(logger,"realizando envio contexto");

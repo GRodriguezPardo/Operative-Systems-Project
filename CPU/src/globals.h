@@ -11,7 +11,10 @@
 
 ////////////// DEFINICION DEL CONTEXTO //////////////
 extern pthread_mutex_t mutex_logger;
+
 extern pthread_mutex_t mutex_dispatch_response;
+
+extern pthread_mutex_t mutex_ejecucion;
 
 typedef struct t_contexto
 {
