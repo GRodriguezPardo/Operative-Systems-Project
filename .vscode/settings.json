@@ -22,6 +22,8 @@
         "tcp_client.h": "c",
         "queue.h": "c",
         "kernel_utils.h": "c",
-        "cpu_dispatch_routine.h": "c"
-    }
+        "cpu_dispatch_routine.h": "c",
+        "stdbool.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "Enabled"
 }
