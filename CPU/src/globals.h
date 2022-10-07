@@ -30,6 +30,8 @@ typedef struct t_contexto
     uint32_t program_counter;
     uint32_t registros[4];
     uint32_t segmentos[4][2];
+    char *dispositivo;
+    uint32_t unidades;
 } t_contexto;
 
 #endif 
