@@ -10,6 +10,10 @@ void *ciclo_instruccion(void *config);
 
 t_contexto *mi_contexto;
 
+sem_t sem;
+sem_t sem_ciclo_instruccion;
+sem_t sem_envio_contexto;
+
 pthread_mutex_t mutex_pipeline;
 pthread_mutex_t mutex_dispatch_response;
 pthread_mutex_t mutex_ejecucion;

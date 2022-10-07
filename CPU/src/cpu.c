@@ -14,7 +14,7 @@
 #include "cpu.h"
 
 
-sem_t sem;
+sem_t sem,sem_ciclo_instruccion,sem_envio_contexto;
 t_contexto mi_contexto;
 int main(){
     t_config *config;
@@ -46,26 +46,109 @@ int main(){
 }
 
 void* ciclo_instruccion(void* config){//hace falta el config?
-    pthread_mutex_lock(&mutex_ejecucion);
+    sem_wait(&sem_ciclo_instruccion);
+    t_log *logger_cpu_ciclo = log_create("./cpu.log", "CPU - Ciclo_instruccion", 0, LOG_LEVEL_INFO);
     ////////////// FETCH //////////////
+    long retardo_instruccion = config_get_long_value((t_config*) config,"RETARDO_INSTRUCCION");
     char* instruccion;
     {
         instruccion = mi_contexto->instrucciones[mi_contexto->program_counter];
-        mi_contexto->program_counter++;
     }
     ////////////// DECODE //////////////
-    //AIUDA
+    char op[10], 
+    oper1[10], 
+    oper2[10];
+    uint8_t instruction_code;
+    uint8_t register1,register2;
     {
-
+        char unSring[20] = "I/O DISCO BX";
+        sscanf(unSring, "%s %s %s", op, oper1, oper2);
+        //voy a realizar solucion simplista, pero podriamos solucionarlo 
+        //de manera que cada instruccion sea una funcion diferente y devuelva un status.
+        if(strcmp(op,"SET")==0){
+            if(strcmp(oper1,"AX")==0){
+                register1 = 0;
+            } else if(strcmp(oper1,"BX")==0){
+                register1 = 1;
+            }else if(strcmp(oper1,"CX")==0){
+                register1 = 2;
+            }else if(strcmp(oper1,"DX")==0){
+                register1 = 3;
+            }else{
+                logger_monitor_error(logger_cpu_ciclo,"variable invalida, devolviendo el contexto");
+                sem_post(&sem_envio_contexto);
+            }
+            //if((int)register2 ) validar variables numericas                    
+            sleep(retardo_instruccion);
+            instruction_code = 0;
+        }else if(strcmp(op,"ADD")){
+            if(strcmp(oper1,"AX")==0){
+                register1 = 0;
+            } else if(strcmp(oper1,"BX")==0){
+                register1 = 1;
+            }else if(strcmp(oper1,"CX")==0){
+                register1 = 2;
+            }else if(strcmp(oper1,"DX")==0){
+                register1 = 3;
+            }else{
+                logger_monitor_error(logger_cpu_ciclo,"variable invalida, devolviendo el contexto");
+                sem_post(&sem_envio_contexto);
+            }
+            if(strcmp(oper2,"AX")==0){
+                register1 = 0;
+            } else if(strcmp(oper2,"BX")==0){
+                register1 = 1;
+            }else if(strcmp(oper2,"CX")==0){
+                register1 = 2;
+            }else if(strcmp(oper2,"DX")==0){
+                register1 = 3;
+            }else{
+                logger_monitor_error(logger_cpu_ciclo,"variable invalida, devolviendo el contexto");
+                sem_post(&sem_envio_contexto);
+            }
+            sleep(retardo_instruccion);
+            instruction_code = 1;
+        }else if(strcmp(op,"MOV_IN")){
+            instruction_code = 2;
+        }else if(strcmp(op,"MOV_OUT")){
+            instruction_code = 3;
+        }else if(strcmp(op,"I/0")){
+            instruction_code = 4;
+        }else if(strcmp(op,"EXIT")){
+            instruction_code = 5;
+        }else{
+            perror("instruccion invalida, devolviendo el contexto");
+            sem_post(&sem_envio_contexto);
+        }
     }
     ////////////// EXECUTE //////////////
     {
-
+        switch(instruction_code){
+            case 0://set
+                mi_contexto->registros[register1] = (uint32_t)oper2;
+                break;
+            case 1://add
+                mi_contexto->registros[register1] += mi_contexto->registros[register2];
+                break;
+            case 2:
+                break;
+            case 3:
+                break;
+            case 4:
+                sem_post(&sem_envio_contexto);// Se deberá devolver el Contexto de Ejecución actualizado al Kernel junto el dispositivo y la cantidad 
+                //de unidades de trabajo del dispositivo que desea utilizar el proceso 
+                break;
+            case 5:
+                sem_post(&sem_envio_contexto);
+                break;
+            default:
+        }
     }
     ////////////// CHECK INTERRUPT //////////////
     {
 
     }
+    mi_contexto->program_counter++;
 }
 
 void* interrupt_server(void* config){
@@ -183,9 +266,9 @@ void *dispatch_routine(void* socket){
             }
         }
 
-        pthread_mutex_unlock(&mutex_ejecucion);
+        sem_post(&sem_ciclo_instruccion);
         ////////////// Esperando para enviar contexto //////////////
-        pthread_mutex_lock(&mutex_dispatch_response);//este mutex devuelve el contexto
+        sem_wait(&sem_envio_contexto);//este sem se frena para esperar la devolucion del contexto
         logger_cpu_info(logger,"realizando envio contexto");
         paquete = crear_paquete(CONTEXTO);
         agregar_a_paquete(paquete,(void *)mi_contexto->id,sizeof(uint32_t));

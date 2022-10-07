@@ -10,11 +10,18 @@
 #include <thesenate/tcp_serializacion.h>
 
 
+
 extern pthread_mutex_t mutex_logger;
 
 extern pthread_mutex_t mutex_dispatch_response;
 
 extern pthread_mutex_t mutex_ejecucion;
+
+
+extern sem_t sem;
+extern sem_t sem_ciclo_instruccion;
+extern sem_t sem_envio_contexto;
+
 ////////////// DEFINICION DEL CONTEXTO //////////////
 typedef struct t_contexto
 {
