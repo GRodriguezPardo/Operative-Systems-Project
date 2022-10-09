@@ -71,5 +71,6 @@ typedef struct t_pcb
 extern void (*finalizar_algoritmo)();
 extern void (*ingresar_a_ready)(t_pcb* pcb);
 extern void (*planificador_corto_plazo)(char* configPath);
+extern t_pcb* (*obtener_siguiente_a_exec)();
 
 #endif /* GLOBALS_H_ */

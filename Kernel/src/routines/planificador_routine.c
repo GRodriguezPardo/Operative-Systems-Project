@@ -37,6 +37,10 @@ void *new_a_ready(void* arg)
         t_pcb* pcb = obtener_siguiente_en_new();
         ingresar_a_ready(pcb);
 
+        pthread_mutex_lock(&mutex_pcb_list);
+        list_add(pcb_list, pcb);
+        pthread_mutex_unlock(&mutex_pcb_list);
+
         char msg[40];
         sprintf(msg, "Se agrega el proceso %d a ready.", (int) (pcb->id));
         logger_monitor_info(logger_largo_plazo, msg);

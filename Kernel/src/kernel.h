@@ -40,5 +40,6 @@ pthread_mutex_t mutex_cola_new;
 void (*finalizar_algoritmo)();
 void (*ingresar_a_ready)(t_pcb* pcb);
 void (*planificador_corto_plazo)(char* configPath);
+t_pcb* (*obtener_siguiente_a_exec)();
 
 #endif /* KERNEL_H_ */

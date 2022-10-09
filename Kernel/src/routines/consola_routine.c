@@ -161,7 +161,16 @@ void *consola_routine(void *param)
                 mi_pcb->pipeline.operacion = CONSOLE_OUTPUT_RESPUESTA;
                 finalizar_IO(mi_pcb->id);
                 break;
-
+            case EXIT:
+                logger_monitor_info(logger, "Finalizando.");
+                pthread_mutex_lock(&mutex_pcb_list);
+                {
+                    search_for_id_buffer = mi_pcb ->id;
+                    list_remove_by_condition(pcb_list, search_for_id);
+                    pcb_element_destroyer((void*) mi_pcb);
+                }
+                pthread_mutex_unlock(&mutex_pcb_list);
+                exit(EXIT_SUCCESS);
             default:
                 perror("Error: Fallo al recibir operacion de IO.\n");
                 logger_monitor_error(logger, "Error: Fallo al recibir operacion de IO.");
@@ -170,7 +179,5 @@ void *consola_routine(void *param)
             }
         }
     }
-
-    exit(EXIT_SUCCESS);
     return NULL;
 }

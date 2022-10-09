@@ -17,4 +17,7 @@ void logger_monitor_error(t_log* logger, const char* message);
 
 bool configurar_algoritmo(char* algortimo);
 
+extern uint32_t search_for_id_buffer;
+bool search_for_id(void *param);
+
 #endif /* KERNEL_UTILS_H_ */

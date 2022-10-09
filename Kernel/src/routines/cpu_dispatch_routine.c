@@ -1,5 +1,6 @@
-#include <commons/log.h>
 #include <commons/config.h>
+#include <commons/log.h>
+#include <commons/collections/list.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,50 +8,148 @@
 #include <thesenate/tcp_client.h>
 #include <thesenate/tcp_serializacion.h>
 #include "cpu_dispatch_routine.h"
+#include "../globals.h"
+#include "../kernel_utils.h"
 
 void *cpu_dispatch_routine(void *config)
 {
-    char* puertoServidor = config_get_string_value((t_config*) config, "PUERTO_CPU_DISPATCH");
-    char* ipCPU = config_get_string_value((t_config*) config,"IP_CPU");
-    int socket = crear_conexion(ipCPU,puertoServidor);
-    op_code codigo_operacion;
-    int  __attribute__((unused)) tamaño_paquete;
-    void *msg;
-    char *input = "hola";
-    t_paquete *paquete;
-    int *return_status = (int*)malloc(sizeof(int));
-    *return_status = 0;
-
-    paquete = crear_paquete(MENSAJE);
-    agregar_a_paquete(paquete, (void *)input, strlen(input) + 1);
-    enviar_paquete(paquete, socket);
-    eliminar_paquete(paquete);
-
-    printf("\nMensaje enviado.\nEsperando respuesta...\n");
-
-    codigo_operacion = recibir_operacion(socket);
-    tamaño_paquete = largo_paquete(socket);
-
-    switch (codigo_operacion)
-    {
-        case RESPUESTA:
-            msg = recibir(socket);
-            printf("Recibi la respuesta: %s\n", (char *)msg);
-            free(msg);
-            break;
-        case -1:
-            perror("Recibi OP_CODE = 0.");
-            *return_status = 1;
-            pthread_exit(return_status);
-            break;
-        default:
-            perror("Recibí una operacion inesperada. Terminando programa.");
-            *return_status = 1;
-            pthread_exit(return_status);
-            break;
+    int socket;
+    {   ////////////// CONFIG //////////////
+        char *puertoServidor, *ipCPU;
+        puertoServidor = config_get_string_value((t_config *)config, "PUERTO_CPU_DISPATCH");
+        ipCPU = config_get_string_value((t_config *)config, "IP_CPU");
+        socket = crear_conexion(ipCPU, puertoServidor);
     }
     
-    printf("Terminando programa.\n");
-    liberar_conexion(socket);
-    pthread_exit(return_status);
+    while (1)
+    {   ////////////// BEGINNING CYCLE //////////////
+        op_code codigo_operacion;
+        int __attribute__((unused)) tamaño_paquete;
+        {   /////// WAITING FOR CPU ///////
+            codigo_operacion = recibir_operacion(socket);
+            tamaño_paquete = largo_paquete(socket);
+        }
+
+        /////// WAITING FOR A CONSOLE TO BE READY ///////
+        sem_wait(&sem_proceso_entro_a_ready);
+
+        /////// DEALING WITH CASES ///////
+        t_pcb* unPcb = NULL;
+        switch (codigo_operacion)
+        {
+        case INIT_CPU:
+            give_cpu_next_pcb(socket);
+            break;
+        case DESALOJO_PROCESO:
+            unPcb = obtener_y_actualizar_pcb_recibido(socket);
+            ingresar_a_ready(unPcb);
+            unPcb = NULL;
+            sem_post(&sem_proceso_entro_a_ready);
+            
+            give_cpu_next_pcb(socket);
+            break;
+        case EXIT_PROCESO:
+            unPcb = obtener_y_actualizar_pcb_recibido(socket);
+            finalizar_proceso(unPcb);
+
+            give_cpu_next_pcb(socket);
+            break;
+        case BLOQUEO_PROCESO:
+            break;
+        default:
+            exit(EXIT_FAILURE);
+            break;
+        }
+    }
+    return NULL;
+}
+
+void give_cpu_next_pcb(int socket)
+{
+    sem_wait(&sem_proceso_entro_a_ready);
+    t_pcb *unPcb = NULL;
+    {   ////////////// OBTENIENDO PROXIMO PCB //////////////
+        unPcb = obtener_siguiente_a_exec();
+    }
+
+    
+    t_paquete *paquete = NULL;
+    {   ////////////// ARMANDO PAQUETE //////////////
+        paquete = crear_paquete(PROXIMO_PCB);
+        agregar_a_paquete(paquete, (void *)&(unPcb->id), sizeof(uint32_t));
+        agregar_a_paquete(paquete, (void *)&(unPcb->program_counter), sizeof(uint32_t));
+        agregar_a_paquete(paquete, (void *)&(unPcb->registros), sizeof(uint32_t) * 4);
+        agregar_a_paquete(paquete, (void *)&(unPcb->segmentos), sizeof(t_segmento_pcb) * 4);
+        agregar_a_paquete(paquete, (void *)&(unPcb->cant_instrucciones), sizeof(uint32_t));
+
+        for (size_t i = 0; i < unPcb->cant_instrucciones; i++)
+        {
+            agregar_a_paquete(paquete, (void *)(unPcb->instrucciones[i]), strlen(unPcb->instrucciones[i]) + 1);
+        }
+    }
+
+    
+    {   ////////////// ENVIANDO PAQUETE Y LIMPIANDO //////////////
+        enviar_paquete(paquete, socket);
+        eliminar_paquete(paquete);
+    }
+}
+
+t_pcb *obtener_y_actualizar_pcb_recibido(int socket)
+{
+    uint32_t *id = NULL;
+    {   ////////////// OTBENIENDO ID //////////////
+        id = recibir(socket);
+    }
+
+    t_pcb *unPcb = NULL;
+    pthread_mutex_lock(&mutex_pcb_list);
+    {   ////////////// ACTUALIZANDO PCB EN LISTA DE PCB //////////////
+
+        {   /////// OBTENIENDO PCB ///////
+            search_for_id_buffer = *id;
+            unPcb = (t_pcb *)list_find(pcb_list, search_for_id);
+            search_for_id_buffer = 0;
+        }
+        free(id);
+
+        {   /////// ACTUALIZANDO PROGRAM COUNTER ///////
+            uint32_t *pc;
+            pc = recibir(socket);
+            unPcb->program_counter = *pc;
+            free(pc);
+        }
+
+        
+        {   /////// ACTUALIZANDO REGISTROS ///////
+            uint32_t *regs;
+            regs = recibir(socket);
+            for (size_t i = 0; i < 4; i++)
+            {
+                unPcb->registros[i] = regs[i];
+            }
+            free(regs);
+        }
+
+        
+        {   /////// ACTUALIZANDO SEGMENTOS ///////
+            t_segmento_pcb *segmentos = NULL;
+            segmentos = (t_segmento_pcb *)recibir(socket);
+            for (size_t i = 0; i < 4; i++)
+            {
+                unPcb->segmentos[i] = segmentos[i];
+            }
+        }
+    }
+    pthread_mutex_unlock(&mutex_pcb_list);
+
+    return unPcb;
+}
+
+void finalizar_proceso(t_pcb* unPcb)
+{
+    unPcb -> pipeline.operacion=EXIT;
+    unPcb -> pipeline.valor=0;
+    sem_post(&(unPcb -> console_semaphore));
+    sem_post(&sem_grado_multiprogramacion);
 }

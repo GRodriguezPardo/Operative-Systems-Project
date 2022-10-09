@@ -93,3 +93,9 @@ bool configurar_algoritmo(char* algortimo)
     }
     return 1;
 }
+
+uint32_t search_for_id_buffer;
+bool search_for_id(void *param)
+{
+    return ((t_pcb *)param)->id == search_for_id_buffer;
+}
