@@ -22,7 +22,14 @@ typedef enum op_code
     MOV_IN,
     MOV_OUT,
     I_O,
-    EXIT
+    EXIT,
+
+    // KERNEL - CPU
+    INIT_CPU,
+    DESALOJO_PROCESO,
+    EXIT_PROCESO,
+    BLOQUEO_PROCESO,
+    PROXIMO_PCB
 }op_code;
 
 typedef struct
