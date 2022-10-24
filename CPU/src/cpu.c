@@ -15,7 +15,7 @@
 
 
 sem_t sem,sem_ciclo_instruccion,sem_envio_contexto;
-t_contexto mi_contexto;
+
 int main(){
     t_config *config;
     config = config_create("../cpu.config");
@@ -64,52 +64,53 @@ void* ciclo_instruccion(void* config){//hace falta el config?
         ////////////// DECODE //////////////
 
             {
-            sscanf(instruccion, "%s %s %s", op, oper1, oper2);
-            //voy a realizar solucion simplista, pero podriamos solucionarlo 
-            //de manera que cada instruccion sea una funcion diferente y devuelva un status.
-            if(strcmp(op,"SET")==0){
-                if(strcmp(oper1,"AX")==0){
-                    register1 = 0;
-                } else if(strcmp(oper1,"BX")==0){
-                    register1 = 1;
-                }else if(strcmp(oper1,"CX")==0){
-                    register1 = 2;
-                }else if(strcmp(oper1,"DX")==0){
-                    register1 = 3;
-                }else{
-                    logger_monitor_error(logger_cpu_ciclo,"variable invalida, devolviendo el contexto");
-                    sem_post(&sem_envio_contexto); //en cualquiera de estos el ciclo de instruccion deberia volver al inicio y esperar al nuevo contexto
-                }
-                //if((int)register2 ) validar variables numericas                    
-                sleep(retardo_instruccion);
-                instruction_code = 0;
-            }else if(strcmp(op,"ADD")){
-                if(strcmp(oper1,"AX")==0){
-                    register1 = 0;
-                } else if(strcmp(oper1,"BX")==0){
-                    register1 = 1;
-                }else if(strcmp(oper1,"CX")==0){
-                    register1 = 2;
-                }else if(strcmp(oper1,"DX")==0){
-                    register1 = 3;
-                }else{
-                    logger_monitor_error(logger_cpu_ciclo,"variable invalida, devolviendo el contexto");
-                    sem_post(&sem_envio_contexto);
-                }
-                if(strcmp(oper2,"AX")==0){
-                    register1 = 0;
-                } else if(strcmp(oper2,"BX")==0){
-                    register1 = 1;
-                }else if(strcmp(oper2,"CX")==0){
-                    register1 = 2;
-                }else if(strcmp(oper2,"DX")==0){
-                    register1 = 3;
-                }else{
-                    logger_monitor_error(logger_cpu_ciclo,"variable invalida, devolviendo el contexto");
-                    sem_post(&sem_envio_contexto);
-                }
-                sleep(retardo_instruccion);
-                instruction_code = 1;
+                sscanf(instruccion, "%s %s %s", op, oper1, oper2);
+                //voy a realizar solucion simplista, pero podriamos solucionarlo 
+                //de manera que cada instruccion sea una funcion diferente y devuelva un status.
+                if(strcmp(op,"SET")==0){
+                    if(strcmp(oper1,"AX")==0){
+                        register1 = 0;
+                    } else if(strcmp(oper1,"BX")==0){
+                        register1 = 1;
+                    }else if(strcmp(oper1,"CX")==0){
+                        register1 = 2;
+                    }else if(strcmp(oper1,"DX")==0){
+                        register1 = 3;
+                    }else{
+                        logger_cpu_error(logger_cpu_ciclo,"variable invalida, devolviendo el contexto");
+                        sem_post(&sem_envio_contexto); //en cualquiera de estos el ciclo de instruccion deberia volver al inicio y esperar al nuevo contexto
+                    }
+                    //if((int)register2 ) validar variables numericas                    
+                    sleep(retardo_instruccion);
+                    instruction_code = 0;
+                }else if(strcmp(op,"ADD")){
+                    if(strcmp(oper1,"AX")==0){
+                        register1 = 0;
+                    } else if(strcmp(oper1,"BX")==0){
+                        register1 = 1;
+                    }else if(strcmp(oper1,"CX")==0){
+                        register1 = 2;
+                    }else if(strcmp(oper1,"DX")==0){
+                        register1 = 3;
+                    }else{
+                        logger_cpu_error(logger_cpu_ciclo,"variable invalida, devolviendo el contexto");
+                        sem_post(&sem_envio_contexto);
+                    }
+
+                    if(strcmp(oper2,"AX")==0){
+                        register2 = 0;
+                    } else if(strcmp(oper2,"BX")==0){
+                        register2 = 1;
+                    }else if(strcmp(oper2,"CX")==0){
+                        register2 = 2;
+                    }else if(strcmp(oper2,"DX")==0){
+                        register2 = 3;
+                    }else{
+                        logger_cpu_error(logger_cpu_ciclo,"variable invalida, devolviendo el contexto");
+                        sem_post(&sem_envio_contexto);
+                    }
+                    sleep(retardo_instruccion);
+                    instruction_code = 1;
                 }else if(strcmp(op,"MOV_IN")){
                     instruction_code = 2;
                 }else if(strcmp(op,"MOV_OUT")){
@@ -128,7 +129,7 @@ void* ciclo_instruccion(void* config){//hace falta el config?
             {
                 switch(instruction_code){
                     case 0://set
-                        mi_contexto->registros[register1] = (uint32_t)oper2;
+                        mi_contexto->registros[register1] = (uint32_t)atoi(oper2);
                         break;
                     case 1://add
                         mi_contexto->registros[register1] += mi_contexto->registros[register2];
@@ -139,7 +140,7 @@ void* ciclo_instruccion(void* config){//hace falta el config?
                         break;
                     case 4://I/O
                         mi_contexto->dispositivo = oper1;
-                        mi_contexto->unidades = (uint32_t)oper2;
+                        mi_contexto->unidades = (uint32_t)atoi(oper2);
                         sem_post(&sem_envio_contexto);// Se deberá devolver el Contexto de Ejecución actualizado al Kernel junto el dispositivo y la cantidad 
                         //de unidades de trabajo del dispositivo que desea utilizar el proceso 
                         break;
@@ -163,6 +164,9 @@ void* interrupt_server(void* config){
     char* ipCPU = config_get_string_value((t_config*) config,"IP_CPU");
     printf("Creando server de interrupt.\n");
     iniciar_servidor(ipCPU,puertoServidor,interrupt_routine);
+
+    exit(EXIT_SUCCESS);
+    return NULL;
 }
 
 void* dispatch_server(void* config){
@@ -170,6 +174,9 @@ void* dispatch_server(void* config){
     char* ipCPU = config_get_string_value((t_config*) config,"IP_CPU");
     printf("Creando server de dispatch.\n");
     iniciar_servidor(ipCPU,puertoServidor,dispatch_routine);
+
+    exit(EXIT_SUCCESS);
+    return NULL;
 }
 
 
@@ -193,15 +200,16 @@ void *dispatch_routine(void* socket){
         sprintf(buffer, "Cpu - Kernel Dispatch");
         logger = log_create("./kernel.log", buffer, 0, LOG_LEVEL_INFO);
     }
+    
+    ///TODO: Mandar paquete vacío a Kernel con el codigo de operacion "INIT_CPU".
+
     while(1){
         codigo_operacion = recibir_operacion(socket_dispatch);
         tamanio_paquete = tamanio_restante = largo_paquete(socket_dispatch);
 
-        
-
-        if(codigo_operacion != CONTEXTO){
+        if(codigo_operacion != PROXIMO_PCB){
             perror("Error: Conexion con dispatch no recibio un contexto de ejecucion");
-            logger_monitor_error(logger, "Error: Inicio de kernel dispatch con codigo inesperado. Finalizando hilo.");
+            logger_cpu_error(logger, "Error: Inicio de kernel dispatch con codigo inesperado. Finalizando hilo.");
             exit(EXIT_FAILURE);
         }
 
@@ -277,21 +285,21 @@ void *dispatch_routine(void* socket){
         ////////////// Esperando para enviar contexto //////////////
         sem_wait(&sem_envio_contexto);//este sem se frena para esperar la devolucion del contexto
         logger_cpu_info(logger,"realizando envio contexto");
-        paquete = crear_paquete(CONTEXTO);
-        agregar_a_paquete(paquete,(void *)mi_contexto->id,sizeof(uint32_t));
-        agregar_a_paquete(paquete,(void *)mi_contexto->program_counter,sizeof(uint32_t));
-        agregar_a_paquete(paquete,(void*)mi_contexto->dispositivo,strlen(mi_contexto->dispositivo));
-        agregar_a_paquete(paquete,(void *)mi_contexto->unidades,sizeof(uint32_t));
+        paquete = crear_paquete(EXIT_PROCESO);
+        agregar_a_paquete(paquete,(void *)&(mi_contexto->id),sizeof(uint32_t));
+        agregar_a_paquete(paquete,(void *)&(mi_contexto->program_counter),sizeof(uint32_t));
+        agregar_a_paquete(paquete,(void*)&(mi_contexto->dispositivo),strlen(mi_contexto->dispositivo));
+        agregar_a_paquete(paquete,(void *)&(mi_contexto->unidades),sizeof(uint32_t));
         for(size_t i = 0; i<4;i++)
         {
-            agregar_a_paquete(paquete,(void *)mi_contexto->registros[i],sizeof(uint32_t));
+            agregar_a_paquete(paquete,(void *)&(mi_contexto->registros[i]),sizeof(uint32_t));
         }
         for(size_t i = 0; i<4; i++){
-            agregar_a_paquete(paquete,(void *)mi_contexto->segmentos[i][0],sizeof(uint32_t));
-            agregar_a_paquete(paquete,(void *)mi_contexto->segmentos[i][1],sizeof(uint32_t));
+            agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos[i][0]),sizeof(uint32_t));
+            agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos[i][1]),sizeof(uint32_t));
         }
         for(size_t i = 0;i<cantidad;i++){
-            agregar_a_paquete(paquete,(void *)mi_contexto->instrucciones[i],strlen(mi_contexto->instrucciones[i])+1);
+            agregar_a_paquete(paquete,(void *)&(mi_contexto->instrucciones[i]),strlen(mi_contexto->instrucciones[i])+1);
         }
         enviar_paquete(paquete,socket_dispatch);
         eliminar_paquete(paquete);
@@ -306,7 +314,7 @@ void *interrupt_routine(void* socket){
 
     int socket_cliente = *(int *)socket;
     op_code codigo_operacion;
-    int tamaño_paquete;
+    int __attribute__((unused)) tamaño_paquete;
     void* msg;
     t_paquete* paquete;
 

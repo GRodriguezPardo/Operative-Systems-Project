@@ -38,7 +38,6 @@ src/functions/%.o: ../src/functions/%.c src/subdir.mk
 	@echo 'Finished building: $<'
 	@echo ' '
 
-
 clean: clean-src
 
 clean-src:

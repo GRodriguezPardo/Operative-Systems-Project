@@ -5,7 +5,6 @@
 #include <commons/log.h>
 #include <stdbool.h>
 #include "globals.h"
-#include "cpu_utils.c"
 
 void init_globals_cpu();
 void finalizar_cpu(t_config* config, t_log* logger);
