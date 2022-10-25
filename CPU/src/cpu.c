@@ -150,11 +150,13 @@ void* ciclo_instruccion(void* config){//hace falta el config?
                     default:
                 }
             }
+
+        mi_contexto->program_counter++;
         ////////////// CHECK INTERRUPT //////////////
         {
 
         }
-        mi_contexto->program_counter++;
+        
     }
     
 }
@@ -258,7 +260,7 @@ void *dispatch_routine(void* socket){
             while(tamanio_restante > 0)
             {
                 msg = recibir(socket_dispatch);
-                instrucciones = (char **)realloc(instrucciones, sizeof(char *) * (cantidad + 1));
+                instrucciones = (char **)realloc(instrucciones, sizeof(char *) * (cantidad + 1)); ///TODO: Revisar realloc, no es necesario.
                 instrucciones[cantidad] = msg;
                 msg = NULL;
 
