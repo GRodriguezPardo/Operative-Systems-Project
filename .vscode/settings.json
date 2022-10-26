@@ -25,7 +25,12 @@
         "cpu_dispatch_routine.h": "c",
         "stdbool.h": "c",
         "fcntl.h": "c",
-        "cpu_utils.h": "c"
+        "cpu_utils.h": "c",
+        "memoria_utils.h": "c",
+        "kernel_routine.h": "c",
+        "memoria.h": "c",
+        "memoria_globals.h": "c",
+        "cpu_routine.h": "c"
     },
     "C_Cpp.errorSquiggles": "Enabled"
 }

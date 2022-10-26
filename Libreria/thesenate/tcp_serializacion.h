@@ -29,7 +29,8 @@ typedef enum op_code
     DESALOJO_PROCESO,
     EXIT_PROCESO,
     BLOQUEO_PROCESO,
-    PROXIMO_PCB
+    PROXIMO_PCB,
+    CONTEXTO
 }op_code;
 
 typedef struct
