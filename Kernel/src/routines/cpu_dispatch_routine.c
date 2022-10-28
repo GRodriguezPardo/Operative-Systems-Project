@@ -42,7 +42,8 @@ void *cpu_dispatch_routine(void *config)
             break;
         case DESALOJO_PROCESO:
             unPcb = obtener_y_actualizar_pcb_recibido(socket);
-            ingresar_a_ready(unPcb);
+            sale_de_exec(unPcb, DESALOJO_PROCESO);
+            ingresar_a_ready(unPcb, DESALOJO_PROCESO);
             unPcb = NULL;
             sem_post(&sem_proceso_entro_a_ready);
             
@@ -50,11 +51,13 @@ void *cpu_dispatch_routine(void *config)
             break;
         case EXIT_PROCESO:
             unPcb = obtener_y_actualizar_pcb_recibido(socket);
+            sale_de_exec(unPcb, EXIT_PROCESO);
             finalizar_proceso(unPcb);
 
             give_cpu_next_pcb(socket);
             break;
         case BLOQUEO_PROCESO:
+            sale_de_exec(unPcb, BLOQUEO_PROCESO);
             break;
         default:
             exit(EXIT_FAILURE);
@@ -72,7 +75,6 @@ void give_cpu_next_pcb(int socket)
         unPcb = obtener_siguiente_a_exec();
     }
 
-    
     t_paquete *paquete = NULL;
     {   ////////////// ARMANDO PAQUETE //////////////
         paquete = crear_paquete(PROXIMO_PCB);

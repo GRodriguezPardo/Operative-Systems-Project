@@ -5,6 +5,7 @@
 #include <commons/collections/queue.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <thesenate/tcp_serializacion.h>
 #include "globals.h"
 
 void *consola_routine(void *socket);
@@ -38,8 +39,9 @@ pthread_mutex_t mutex_pcb_list;
 pthread_mutex_t mutex_cola_new;
 
 void (*finalizar_algoritmo)();
-void (*ingresar_a_ready)(t_pcb* pcb);
-void (*planificador_corto_plazo)(char* configPath);
+void (*ingresar_a_ready)(t_pcb* pcb, op_code source);
 t_pcb* (*obtener_siguiente_a_exec)();
+void (*sale_de_exec)(t_pcb* pcb, op_code source);
+void (*clock_routine)();
 
 #endif /* KERNEL_H_ */
