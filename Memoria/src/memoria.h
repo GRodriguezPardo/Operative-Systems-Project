@@ -10,12 +10,20 @@
 #include <stdlib.h>
 #include <sys/socket.h>
 
+//////// VARIABLES GLOBALES /////////
+
 t_config *config;
 t_log *logger;
-pthread_mutex_t mutexLogger;
-pthread_mutex_t mx_main;
+pthread_mutex_t mx_logger, mx_main, mx_memoria;
+void *memoriaPrincipal;
 
-void *crearServidorMemoria(void *);
+int tamanioMaxSegmento;
+int cantMaxMarcosXProceso;
+
+void (*reemplazarPagina)();
+
+
+void *levantarServerMemoria(void *);
 void *atenderConexion(void *);
 
 #endif /* MEMORIA_H_ */

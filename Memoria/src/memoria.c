@@ -2,31 +2,32 @@
 #include <string.h>
 
 int main(int argc, char** argv){
-    inicializarMemoria();
+    printf("Iniciando módulo memoria...");
+    memoria_iniciar();
 
     ////////////// CREANDO SERVER //////////////
     puts("Creando server de memoria.");
     pthread_t threadSv;
-    if (pthread_create(&threadSv, NULL, &crearServidorMemoria, (void *) config) < 0) {
+    if (pthread_create(&threadSv, NULL, &levantarServerMemoria, (void *) config) < 0) {
         perror("Thread de memoria falló.");
         return EXIT_FAILURE;
     }
 
     esperarHilos();
     printf("Finalizando módulo memoria...");
-    finalizarMemoria();
+    memoria_finalizar();
     return EXIT_SUCCESS;
 }
 
-void *crearServidorMemoria(void * config){
-    int *return_status = (int*)calloc(1, sizeof(int));
+void *levantarServerMemoria(void * config){
+    //int *return_status = (int*)calloc(1, sizeof(int));
     char* ipMemoria = config_get_string_value(config,"IP_MEMORIA");
     char* puertoEscucha = config_get_string_value(config, "PUERTO_ESCUCHA");
     iniciar_servidor(ipMemoria, puertoEscucha, atenderConexion);
-    pthread_exit(return_status);
+    //pthread_exit(return_status);
 }
 
-void *atenderConexion(void * socketFd){
+void *atenderConexion(void *socketFd){
     int *return_status = (int*)malloc(sizeof(int));
     int socket = *(int *) socketFd;
     *return_status = 0;
