@@ -35,7 +35,7 @@ void *new_a_ready(void* arg)
         sem_wait(&sem_grado_multiprogramacion);
 
         t_pcb* pcb = obtener_siguiente_en_new();
-        ingresar_a_ready(pcb);
+        ingresar_a_ready(pcb, NUEVO_PROCESO);
 
         pthread_mutex_lock(&mutex_pcb_list);
         list_add(pcb_list, pcb);

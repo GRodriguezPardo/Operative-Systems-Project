@@ -42,7 +42,7 @@ void *cpu_dispatch_routine(void *config)
             break;
         case DESALOJO_PROCESO:
             unPcb = obtener_y_actualizar_pcb_recibido(socket);
-            ingresar_a_ready(unPcb);
+            ingresar_a_ready(unPcb, DESALOJO_PROCESO);
             unPcb = NULL;
             sem_post(&sem_proceso_entro_a_ready);
             
