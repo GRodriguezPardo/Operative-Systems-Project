@@ -40,7 +40,8 @@ pthread_mutex_t mutex_cola_new;
 
 void (*finalizar_algoritmo)();
 void (*ingresar_a_ready)(t_pcb* pcb, op_code source);
-void (*planificador_corto_plazo)(char* configPath);
 t_pcb* (*obtener_siguiente_a_exec)();
+void (*sale_de_exec)(t_pcb* pcb, op_code source);
+void (*clock_routine)();
 
 #endif /* KERNEL_H_ */

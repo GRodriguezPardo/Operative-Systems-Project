@@ -70,7 +70,8 @@ typedef struct t_pcb
 ////////////// PUNTEROS A FUNCIONES GLOBALES - ALGORITMOS //////////////
 extern void (*finalizar_algoritmo)();
 extern void (*ingresar_a_ready)(t_pcb* pcb, op_code source);
-extern void (*planificador_corto_plazo)(char* configPath);
 extern t_pcb* (*obtener_siguiente_a_exec)();
+extern void (*sale_de_exec)(t_pcb* pcb, op_code source);
+extern void (*clock_routine)();
 
 #endif /* GLOBALS_H_ */

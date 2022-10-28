@@ -30,7 +30,8 @@
         "kernel_routine.h": "c",
         "memoria.h": "c",
         "memoria_globals.h": "c",
-        "cpu_routine.h": "c"
+        "cpu_routine.h": "c",
+        "round_robin.h": "c"
     },
     "C_Cpp.errorSquiggles": "Enabled"
 }
