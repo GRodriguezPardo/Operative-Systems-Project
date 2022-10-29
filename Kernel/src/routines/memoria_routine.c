@@ -1,3 +1,5 @@
+#include <pthread.h>
+#include <stdlib.h>
 #include "memoria_routine.h"
 
 void *memoria_routine(void *config_aux)
@@ -16,26 +18,26 @@ void *memoria_routine(void *config_aux)
 }
 
 static int conectarAMemoria(t_config *config){
-    int socketFd;
+    /* int socketFd;
     char *ip = config_get_string_value(config, "IP_MEMORIA");
     char *puerto = config_get_string_value(config, "PUERTO_MEMORIA");
     socketFd = crear_conexion(ip, puerto);
-    return socketFd;
+    return socketFd; */
+    return 0;
 }
 
 static void iniciarHandshake(int socket){
 
-    t_paquete *pack = crear_paquete(KERNEL_ACK);
+    /* t_paquete *pack = crear_paquete(KERNEL_ACK);
     char *msg = "";
     agregar_a_paquete(pack, msg, string_length(msg) * sizeof(char));
     enviar_paquete(pack, socket);
     eliminar_paquete(pack);
     //recibir respuesta
     op_code code = recibir_operacion(socket);
-    /*if (code != KERNEL_ACK) 
+    if (code != KERNEL_ACK) 
         return 1;
-    */
     char* respuesta = (char *) recibir(socket);
     if (strcmp(respuesta, "OK."))
-        perror("El handshake fue incorrecto.");
+        perror("El handshake fue incorrecto."); */
 }

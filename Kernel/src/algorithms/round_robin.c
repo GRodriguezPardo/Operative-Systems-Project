@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <thesenate/tcp_serializacion.h>
+#include <unistd.h>
 #include "round_robin.h"
 #include "../globals.h"
 
@@ -13,7 +14,7 @@ pthread_mutex_t mutex_reloj_rr;
 sem_t sem_clock_rr;
 
 short clock_time;
-extern const QUANTUM;
+short QUANTUM;
 
 void rr_init_algoritmo()
 {
@@ -21,8 +22,8 @@ void rr_init_algoritmo()
     pthread_mutex_init(&mutex_cola_rr, NULL);
     pthread_mutex_init(&mutex_reloj_rr, NULL);
     sem_init(&sem_clock_rr, 0, 0);
+    QUANTUM = 2;
     clock_time = QUANTUM;
-    static const QUANTUM = 2;
 }
 
 void rr_final_algoritmo()

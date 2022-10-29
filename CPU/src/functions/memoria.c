@@ -5,28 +5,29 @@
 
 void *memoria_routine(void *config_aux)
 {
-    int *return_status = (int*)malloc(sizeof(int));
+    /* int *return_status = (int*)malloc(sizeof(int));
     *return_status = 0;
     t_config *config = (t_config *)config_aux;
 
     int socketMemoria = conectarAMemoria(config);
     iniciarHandshake(socketMemoria);
 
-    pthread_exit(return_status);
+    pthread_exit(return_status); */
     return 0;
 }
 
 int conectarAMemoria(t_config *config){
-    int socketFd;
+    /* int socketFd;
     char *ip = config_get_string_value(config, "IP_MEMORIA");
     char *puerto = config_get_string_value(config, "PUERTO_MEMORIA");
     socketFd = crear_conexion(ip, puerto);
-    return socketFd;
+    return socketFd; */
+    return 0;
 }
 
 void iniciarHandshake(int socket){
 
-    t_paquete *pack = crear_paquete(CPU_ACK);
+    /* t_paquete *pack = crear_paquete(CPU_ACK);
     char *msg = "";
     agregar_a_paquete(pack, msg, string_length(msg) * sizeof(char));
     enviar_paquete(pack, socket);
@@ -36,5 +37,5 @@ void iniciarHandshake(int socket){
 
     char* respuesta = (char *) recibir(socket);
     if (strcmp(respuesta, "OK."))
-        perror("El handshake fue incorrecto.");
+        perror("El handshake fue incorrecto."); */
 }
