@@ -31,7 +31,7 @@ void *cpu_dispatch_routine(void *config)
         }
 
         /////// WAITING FOR A CONSOLE TO BE READY ///////
-        sem_wait(&sem_proceso_entro_a_ready);
+        //sem_wait(&sem_proceso_entro_a_ready);
 
         /////// DEALING WITH CASES ///////
         t_pcb* unPcb = NULL;

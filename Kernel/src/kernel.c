@@ -47,7 +47,7 @@ int main(int argc, char** argv)
     {
         perror("Error: Memoria thread failed.\n");
         logger_monitor_error(logger, "Error: Memoria thread failed.");
-    }
+    }*/
 
     logger_monitor_info(logger, "Conectando a CPU-Dispatch.");
     if (pthread_create(&cpu_dispatch, NULL, cpu_dispatch_routine, (void *) config) < 0)
@@ -57,7 +57,7 @@ int main(int argc, char** argv)
     }
 
     logger_monitor_info(logger, "Conectando a CPU-Interrupt.");
-    if (pthread_create(&cpu_interrupt, NULL, cpu_interrupt_routine, (void *) config) < 0)
+   /* if (pthread_create(&cpu_interrupt, NULL, cpu_interrupt_routine, (void *) config) < 0)
     {
         perror("Error: CPU-Interrupt thread failed.\n");
         logger_monitor_error(logger, "Error: CPU-Interrupt thread failed.");
