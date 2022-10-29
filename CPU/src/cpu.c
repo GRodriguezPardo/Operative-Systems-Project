@@ -20,7 +20,7 @@ int main(){
     t_config *config;
     config = config_create("../cpu.config");
     printf("%s\n", config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT"));
-    t_log *logger = log_create("./cpu.log", "CPU - Main", 0, LOG_LEVEL_INFO);
+    t_log *logger = log_create("../cpu.log", "CPU - Main", 0, LOG_LEVEL_INFO);
     init_globals_cpu();
     pthread_t interrupt, dispatch, executer;
     if (pthread_create(&interrupt, NULL, interrupt_server, (void *) config) < 0)
@@ -47,7 +47,7 @@ int main(){
 
 void* ciclo_instruccion(void* config){
     
-    t_log *logger_cpu_ciclo = log_create("./cpu.log", "CPU - Ciclo_instruccion", 0, LOG_LEVEL_INFO);
+    t_log *logger_cpu_ciclo = log_create("../cpu.log", "CPU - Ciclo_instruccion", 0, LOG_LEVEL_INFO);
     long retardo_instruccion = config_get_long_value((t_config*) config,"RETARDO_INSTRUCCION");
     char op[10], 
     oper1[10], 
@@ -140,7 +140,7 @@ void* ciclo_instruccion(void* config){
                         mi_contexto->dispositivo = oper1;
                         mi_contexto->unidades = (uint32_t)atoi(oper2);
                         devolverContexto = true;
-                        mi_contexto -> pipeline.operacion = EXIT_PROCESO;
+                        mi_contexto -> pipeline.operacion = BLOQUEO_PROCESO; //pensar prioridades de razones para desalojar
                         break;
                     case 5://EXIT
                         devolverContexto = true;
@@ -149,16 +149,17 @@ void* ciclo_instruccion(void* config){
                     default:
                 }
             }
-
         mi_contexto->program_counter++;
+        log_info(logger_cpu_ciclo,"PID:%s - Ejecutando: %s - %s - %s",mi_contexto->id,op,oper1,oper2);
         ////////////// CHECK INTERRUPT //////////////
         {
             if(flag_interrupcion == 1){
-                devolverContexto = true;
-                mi_contexto -> pipeline.operacion = DESALOJO_PROCESO;
+                if(pid_interrupt == mi_contexto->id){
+                    devolverContexto = true;
+                    mi_contexto -> pipeline.operacion = DESALOJO_PROCESO;
+                }
             }
         }
-
         if(devolverContexto){
             sem_post(&sem_envio_contexto);
         }
@@ -198,7 +199,7 @@ void *dispatch_routine(void* socket){
     uint32_t id;
     uint32_t pc;
     uint32_t registros[4];
-    uint32_t segmentos[4][2];
+    t_segmento segmentos[4];
     uint32_t cantidad = 0;
     char **instrucciones;
 
@@ -211,7 +212,7 @@ void *dispatch_routine(void* socket){
     {
         char buffer[25];
         sprintf(buffer, "Cpu - Kernel Dispatch");
-        logger = log_create("./cpu.log", buffer, 0, LOG_LEVEL_INFO);
+        logger = log_create("../cpu.log", buffer, 0, LOG_LEVEL_INFO);
     }
     
     
@@ -241,28 +242,22 @@ void *dispatch_routine(void* socket){
         free(msg);
         msg = NULL;
         ////////////// Recibiendo Registros //////////////
-        tamanio_restante -= 8;
         {
+            msg = recibir(socket_dispatch);
             for(size_t i = 0; i<4; i++){
-                msg = recibir(socket_dispatch);
                 registros[i] = *((uint32_t *)msg);
-                free(msg);
-                msg = NULL;
             }
-            tamanio_restante -=32;
+            free(msg);
+            msg = NULL;
         }
         ////////////// Recibiendo Segmentos //////////////
         {
+            msg = recibir(socket_dispatch);
             for(size_t i = 0;i<4;i++){
-                msg = recibir(socket_dispatch);
-                segmentos[i][0] = *((uint32_t *)msg);//tamanio
-                free(msg);
-                msg = NULL;
-                msg = recibir(socket_dispatch);
-                segmentos[i][1] = *((uint32_t *)msg);//numero tabla paginas
-                free(msg);
-                msg = NULL;
+                segmentos[i] = *((t_segmento *)msg);
             }
+            free(msg);
+            msg = NULL;
         }
         ////////////// Recibiendo Instrucciones//////////////
         msg = recibir(socket_dispatch);
@@ -288,8 +283,7 @@ void *dispatch_routine(void* socket){
                 mi_contexto->registros[i] = registros[i];
             }
             for(size_t i = 0;i<4;i++){
-                mi_contexto->segmentos[i][0] = segmentos[i][0];
-                mi_contexto->segmentos[i][1] = segmentos[i][1];
+                mi_contexto->segmentos[i] = segmentos[i];
             }
         }
 
@@ -303,14 +297,8 @@ void *dispatch_routine(void* socket){
                 paquete = crear_paquete(mi_contexto -> pipeline.operacion);
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->id),sizeof(uint32_t));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->program_counter),sizeof(uint32_t));
-                for(size_t i = 0; i<4;i++)
-                {
-                    agregar_a_paquete(paquete,(void *)&(mi_contexto->registros[i]),sizeof(uint32_t));
-                }
-                for(size_t i = 0; i<4; i++){
-                    agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos[i][0]),sizeof(uint32_t));
-                    agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos[i][1]),sizeof(uint32_t));
-                }
+                agregar_a_paquete(paquete,(void *)&(mi_contexto->registros),sizeof(uint32_t)*4);
+                agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos),sizeof(t_segmento)*4);
                 enviar_paquete(paquete,socket_dispatch);
                 eliminar_paquete(paquete);
                 break;
@@ -318,14 +306,8 @@ void *dispatch_routine(void* socket){
                 paquete = crear_paquete(mi_contexto -> pipeline.operacion);
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->id),sizeof(uint32_t));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->program_counter),sizeof(uint32_t));
-                for(size_t i = 0; i<4;i++)
-                {
-                    agregar_a_paquete(paquete,(void *)&(mi_contexto->registros[i]),sizeof(uint32_t));
-                }
-                for(size_t i = 0; i<4; i++){
-                    agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos[i][0]),sizeof(uint32_t));
-                    agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos[i][1]),sizeof(uint32_t));
-                }
+                agregar_a_paquete(paquete,(void *)&(mi_contexto->registros),sizeof(uint32_t)*4);
+                agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos),sizeof(t_segmento)*4);
                 enviar_paquete(paquete,socket_dispatch);
                 eliminar_paquete(paquete);
                 break;
@@ -333,16 +315,10 @@ void *dispatch_routine(void* socket){
                 paquete = crear_paquete(mi_contexto -> pipeline.operacion);
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->id),sizeof(uint32_t));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->program_counter),sizeof(uint32_t));
+                agregar_a_paquete(paquete,(void *)&(mi_contexto->registros),sizeof(uint32_t)*4);
+                agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos),sizeof(t_segmento)*4);
                 agregar_a_paquete(paquete,(void*)&(mi_contexto->dispositivo),strlen(mi_contexto->dispositivo));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->unidades),sizeof(uint32_t));
-                for(size_t i = 0; i<4;i++)
-                {
-                    agregar_a_paquete(paquete,(void *)&(mi_contexto->registros[i]),sizeof(uint32_t));
-                }
-                for(size_t i = 0; i<4; i++){
-                    agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos[i][0]),sizeof(uint32_t));
-                    agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos[i][1]),sizeof(uint32_t));
-                }
                 enviar_paquete(paquete,socket_dispatch);
                 eliminar_paquete(paquete);
                 break;
@@ -358,21 +334,20 @@ void *dispatch_routine(void* socket){
 void *interrupt_routine(void* socket){
     int *return_status = (int*)malloc(sizeof(int));
     *return_status = 0;
-
+    pid_interrupt = 0;
     int socket_cliente = *(int *)socket;
     op_code codigo_operacion;
     void* msg;
-    t_paquete* paquete;
     int flag_interrupcion = 0;
     ///////////// Inicializando Logger /////////////
     t_log *logger;
     {
         char buffer[25];
         sprintf(buffer, "Cpu - Kernel interrupt");
-        logger = log_create("./Cpu.log", buffer, 0, LOG_LEVEL_INFO);
+        logger = log_create("../Cpu.log", buffer, 0, LOG_LEVEL_INFO);
     }
 
-
+    /////////// Recibiendo Interrupciones //////////
     while (1)
     {
         codigo_operacion = recibir_operacion(socket_cliente);
@@ -380,6 +355,7 @@ void *interrupt_routine(void* socket){
             case DESALOJO_PROCESO:
                 msg = recibir(socket_cliente);
                 log_info(logger,"Recibi el mensaje: %s\nEn el socket: %d\n", (char*) msg, socket_cliente);
+                pid_interrupt = *((uint32_t*)msg);
                 free(msg);
                 flag_interrupcion = 1;
                 break;

@@ -14,6 +14,8 @@ void **pipeline;
 
 int flag_interrupcion;
 
+uint32_t pid_interrupt;
+
 sem_t sem;
 sem_t sem_ciclo_instruccion;
 sem_t sem_envio_contexto;

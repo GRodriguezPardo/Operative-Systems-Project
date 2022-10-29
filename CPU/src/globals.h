@@ -22,11 +22,16 @@ typedef struct t_contexto
     char **instrucciones;
     uint32_t program_counter;
     uint32_t registros[4];
-    uint32_t segmentos[4][2];
+    t_segmento segmentos[4];
     char *dispositivo;
     uint32_t unidades;
     t_pipeline pipeline;
 } t_contexto;
+
+typedef struct t_segmento {
+    uint32_t tamanio;
+    uint32_t identificador_tabla;
+} t_segmento;
 
 extern int flag_interrupcion;
 
@@ -39,6 +44,8 @@ extern pthread_mutex_t mutex_logger;
 extern pthread_mutex_t mutex_dispatch_response;
 
 extern pthread_mutex_t mutex_ejecucion;
+
+extern uint32_t pid_interrupt;
 
 
 
