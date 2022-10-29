@@ -58,69 +58,60 @@ void* ciclo_instruccion(void* config){
     bool devolverContexto;
     ////////////// FETCH //////////////
     sem_wait(&sem_ciclo_instruccion);
+    log_info(logger_cpu_ciclo,"%s",mi_contexto->instrucciones[mi_contexto->program_counter]);
     while(1){
             {
             instruccion = mi_contexto->instrucciones[mi_contexto->program_counter];
             }
         ////////////// DECODE //////////////
-
+            log_info(logger_cpu_ciclo,"%s",instruccion);
             {
                 sscanf(instruccion, "%s %s %s", op, oper1, oper2);
-                if(strcmp(op,"SET")==0){
-                    if(strcmp(oper1,"AX")==0){
+                log_info(logger_cpu_ciclo,"la operacion es :%s",op);
+                if(!strcmp(op,"SET")){
+                    if(!strcmp(oper1,"AX")){
                         register1 = 0;
-                    } else if(strcmp(oper1,"BX")==0){
+                    } else if(!strcmp(oper1,"BX")){
                         register1 = 1;
-                    }else if(strcmp(oper1,"CX")==0){
+                    }else if(!strcmp(oper1,"CX")){
                         register1 = 2;
-                    }else if(strcmp(oper1,"DX")==0){
+                    }else if(!strcmp(oper1,"DX")){
                         register1 = 3;
-                    }else{
-                        logger_cpu_error(logger_cpu_ciclo,"variable invalida, devolviendo el contexto");
-                        devolverContexto = true;
-                    }                   
+                    }        
                     sleep(retardo_instruccion);
                     instruction_code = 0;
-                }else if(strcmp(op,"ADD")){
-                    if(strcmp(oper1,"AX")==0){
+                }else if(!strcmp(op,"ADD")){
+                    if(!strcmp(oper1,"AX")){
                         register1 = 0;
-                    } else if(strcmp(oper1,"BX")==0){
+                    } else if(!strcmp(oper1,"BX")){
                         register1 = 1;
-                    }else if(strcmp(oper1,"CX")==0){
+                    }else if(!strcmp(oper1,"CX")){
                         register1 = 2;
-                    }else if(strcmp(oper1,"DX")==0){
+                    }else if(!strcmp(oper1,"DX")){
                         register1 = 3;    
-                    }else{
-                        logger_cpu_error(logger_cpu_ciclo,"variable invalida, devolviendo el contexto");
-                        devolverContexto = true;
                     }
-
-                    if(strcmp(oper2,"AX")==0){
+                    if(!strcmp(oper2,"AX")){
                         register2 = 0;
-                    } else if(strcmp(oper2,"BX")==0){
+                    } else if(!strcmp(oper2,"BX")){
                         register2 = 1;
-                    }else if(strcmp(oper2,"CX")==0){
+                    }else if(!strcmp(oper2,"CX")){
                         register2 = 2;
-                    }else if(strcmp(oper2,"DX")==0){
+                    }else if(!strcmp(oper2,"DX")){
                         register2 = 3;
-                    }else{
-                        logger_cpu_error(logger_cpu_ciclo,"variable invalida, devolviendo el contexto");
-                        devolverContexto = true;
                     }
                     sleep(retardo_instruccion);
                     instruction_code = 1;   
-                }else if(strcmp(op,"MOV_IN")){
+                }else if(!strcmp(op,"MOV_IN")){
                     instruction_code = 2;
-                }else if(strcmp(op,"MOV_OUT")){
+                }else if(!strcmp(op,"MOV_OUT")){
                     instruction_code = 3;
-                }else if(strcmp(op,"I/0")){
-                    //validacion de variables validas
+                }else if(!strcmp(op,"I/0")){
                     instruction_code = 4;
-                }else if(strcmp(op,"EXIT")){
+                }else if(!strcmp(op,"EXIT")){
                     instruction_code = 5;
                 }else{
                     perror("instruccion invalida, devolviendo el contexto");
-                    sem_post(&sem_envio_contexto);
+                    devolverContexto = true;
                 }
             }
             ////////////// EXECUTE //////////////
@@ -150,7 +141,7 @@ void* ciclo_instruccion(void* config){
                 }
             }
         mi_contexto->program_counter++;
-        log_info(logger_cpu_ciclo,"PID:%s - Ejecutando: %s - %s - %s",mi_contexto->id,op,oper1,oper2);
+        log_info(logger_cpu_ciclo,"PID:%d - Ejecutando: %s - %s - %s",mi_contexto->id,op,oper1,oper2);
         ////////////// CHECK INTERRUPT //////////////
         {
             if(flag_interrupcion == 1){
@@ -242,39 +233,36 @@ void *dispatch_routine(void* socket){
         free(msg);
         msg = NULL;
         ////////////// Recibiendo Registros //////////////
-        {
-            msg = recibir(socket_dispatch);
-            for(size_t i = 0; i<4; i++){
-                registros[i] = *((uint32_t *)msg);
-            }
-            free(msg);
-            msg = NULL;
+        msg = recibir(socket_dispatch);
+        for(size_t i = 0; i<4; i++){
+            registros[i] = ((uint32_t *)msg)[i];
         }
+        free(msg);
+        msg = NULL;
         ////////////// Recibiendo Segmentos //////////////
-        {
-            msg = recibir(socket_dispatch);
-            for(size_t i = 0;i<4;i++){
-                segmentos[i] = *((t_segmento *)msg);
-            }
-            free(msg);
-            msg = NULL;
+        msg = recibir(socket_dispatch);
+        for(size_t i = 0;i<4;i++){
+            segmentos[i] = ((t_segmento *)msg)[i];
         }
+        free(msg);
+        msg = NULL;
         ////////////// Recibiendo Instrucciones//////////////
         msg = recibir(socket_dispatch);
         cantidad = *((uint32_t *)msg);
         free(msg);
         msg = NULL;
         {
-            instrucciones = (char **)malloc(sizeof(char *) * (cantidad));
-            for(uint32_t i = 0; i <cantidad; i++)//chequear con gonza
+            instrucciones = (char**)malloc(sizeof(char *) * (cantidad));
+            for(uint32_t i = 0; i <cantidad; i++)
             {
                 msg = recibir(socket_dispatch);
-                instrucciones[i] = msg;
+                instrucciones[i] = (char*)msg;
+                free(msg);
                 msg = NULL;
             }
         }
         ////////////// Actualizando contexto //////////////
-        
+        log_info(logger,"%s",instrucciones[0]);
         {
             mi_contexto->id = id;
             mi_contexto->program_counter = pc;
@@ -338,7 +326,6 @@ void *interrupt_routine(void* socket){
     int socket_cliente = *(int *)socket;
     op_code codigo_operacion;
     void* msg;
-    int flag_interrupcion = 0;
     ///////////// Inicializando Logger /////////////
     t_log *logger;
     {

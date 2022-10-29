@@ -16,6 +16,11 @@ typedef struct t_pipeline {
     uint32_t valor;
 } t_pipeline;
 
+typedef struct t_segmento {
+    uint32_t tamanio;
+    uint32_t identificador_tabla;
+} t_segmento;
+
 typedef struct t_contexto
 {
     uint32_t id;
@@ -28,10 +33,7 @@ typedef struct t_contexto
     t_pipeline pipeline;
 } t_contexto;
 
-typedef struct t_segmento {
-    uint32_t tamanio;
-    uint32_t identificador_tabla;
-} t_segmento;
+
 
 extern int flag_interrupcion;
 
