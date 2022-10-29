@@ -45,7 +45,7 @@ int main(){
     return 0;
 }
 
-void* ciclo_instruccion(void* config){//hace falta el config?
+void* ciclo_instruccion(void* config){
     
     t_log *logger_cpu_ciclo = log_create("./cpu.log", "CPU - Ciclo_instruccion", 0, LOG_LEVEL_INFO);
     long retardo_instruccion = config_get_long_value((t_config*) config,"RETARDO_INSTRUCCION");
@@ -55,6 +55,7 @@ void* ciclo_instruccion(void* config){//hace falta el config?
     char* instruccion;
     uint8_t instruction_code;
     uint8_t register1,register2;
+    bool devolverContexto;
     ////////////// FETCH //////////////
     sem_wait(&sem_ciclo_instruccion);
     while(1){
@@ -65,8 +66,6 @@ void* ciclo_instruccion(void* config){//hace falta el config?
 
             {
                 sscanf(instruccion, "%s %s %s", op, oper1, oper2);
-                //voy a realizar solucion simplista, pero podriamos solucionarlo 
-                //de manera que cada instruccion sea una funcion diferente y devuelva un status.
                 if(strcmp(op,"SET")==0){
                     if(strcmp(oper1,"AX")==0){
                         register1 = 0;
@@ -78,9 +77,8 @@ void* ciclo_instruccion(void* config){//hace falta el config?
                         register1 = 3;
                     }else{
                         logger_cpu_error(logger_cpu_ciclo,"variable invalida, devolviendo el contexto");
-                        sem_post(&sem_envio_contexto); //en cualquiera de estos el ciclo de instruccion deberia volver al inicio y esperar al nuevo contexto
-                    }
-                    //if((int)register2 ) validar variables numericas                    
+                        devolverContexto = true;
+                    }                   
                     sleep(retardo_instruccion);
                     instruction_code = 0;
                 }else if(strcmp(op,"ADD")){
@@ -91,10 +89,10 @@ void* ciclo_instruccion(void* config){//hace falta el config?
                     }else if(strcmp(oper1,"CX")==0){
                         register1 = 2;
                     }else if(strcmp(oper1,"DX")==0){
-                        register1 = 3;
+                        register1 = 3;    
                     }else{
                         logger_cpu_error(logger_cpu_ciclo,"variable invalida, devolviendo el contexto");
-                        sem_post(&sem_envio_contexto);
+                        devolverContexto = true;
                     }
 
                     if(strcmp(oper2,"AX")==0){
@@ -107,10 +105,10 @@ void* ciclo_instruccion(void* config){//hace falta el config?
                         register2 = 3;
                     }else{
                         logger_cpu_error(logger_cpu_ciclo,"variable invalida, devolviendo el contexto");
-                        sem_post(&sem_envio_contexto);
+                        devolverContexto = true;
                     }
                     sleep(retardo_instruccion);
-                    instruction_code = 1;
+                    instruction_code = 1;   
                 }else if(strcmp(op,"MOV_IN")){
                     instruction_code = 2;
                 }else if(strcmp(op,"MOV_OUT")){
@@ -141,11 +139,12 @@ void* ciclo_instruccion(void* config){//hace falta el config?
                     case 4://I/O
                         mi_contexto->dispositivo = oper1;
                         mi_contexto->unidades = (uint32_t)atoi(oper2);
-                        sem_post(&sem_envio_contexto);// Se deberá devolver el Contexto de Ejecución actualizado al Kernel junto el dispositivo y la cantidad 
-                        //de unidades de trabajo del dispositivo que desea utilizar el proceso 
+                        devolverContexto = true;
+                        mi_contexto -> pipeline.operacion = EXIT_PROCESO;
                         break;
                     case 5://EXIT
-                        sem_post(&sem_envio_contexto);
+                        devolverContexto = true;
+                        mi_contexto -> pipeline.operacion = EXIT_PROCESO;
                         break;
                     default:
                 }
@@ -154,7 +153,14 @@ void* ciclo_instruccion(void* config){//hace falta el config?
         mi_contexto->program_counter++;
         ////////////// CHECK INTERRUPT //////////////
         {
+            if(flag_interrupcion == 1){
+                devolverContexto = true;
+                mi_contexto -> pipeline.operacion = DESALOJO_PROCESO;
+            }
+        }
 
+        if(devolverContexto){
+            sem_post(&sem_envio_contexto);
         }
         
     }
@@ -189,8 +195,13 @@ void *dispatch_routine(void* socket){
     ////////////// DECODING PARAM //////////////
     int socket_dispatch = *(int *)socket;
     op_code codigo_operacion;
-    
-    
+    uint32_t id;
+    uint32_t pc;
+    uint32_t registros[4];
+    uint32_t segmentos[4][2];
+    uint32_t cantidad = 0;
+    char **instrucciones;
+
     int __attribute__((unused)) tamanio_paquete, tamanio_restante;
     void* msg = NULL;
     t_paquete* paquete;
@@ -200,11 +211,15 @@ void *dispatch_routine(void* socket){
     {
         char buffer[25];
         sprintf(buffer, "Cpu - Kernel Dispatch");
-        logger = log_create("./kernel.log", buffer, 0, LOG_LEVEL_INFO);
+        logger = log_create("./cpu.log", buffer, 0, LOG_LEVEL_INFO);
     }
     
-    ///TODO: Mandar paquete vacío a Kernel con el codigo de operacion "INIT_CPU".
-
+    
+    paquete = crear_paquete(INIT_CPU);
+    enviar_paquete(paquete,socket_dispatch);
+    eliminar_paquete(paquete);
+    
+     
     while(1){
         codigo_operacion = recibir_operacion(socket_dispatch);
         tamanio_paquete = tamanio_restante = largo_paquete(socket_dispatch);
@@ -215,19 +230,17 @@ void *dispatch_routine(void* socket){
             exit(EXIT_FAILURE);
         }
 
-        uint32_t id;
+        
         msg = recibir(socket_dispatch);
         id = *((uint32_t*)msg);
         free(msg);
         msg = NULL;
         ////////////// Recibiendo PC //////////////
-        uint32_t pc;
         msg = recibir(socket_dispatch);
         pc = *((uint32_t*)msg);
         free(msg);
         msg = NULL;
         ////////////// Recibiendo Registros //////////////
-        uint32_t registros[4];
         tamanio_restante -= 8;
         {
             for(size_t i = 0; i<4; i++){
@@ -239,7 +252,6 @@ void *dispatch_routine(void* socket){
             tamanio_restante -=32;
         }
         ////////////// Recibiendo Segmentos //////////////
-        uint32_t segmentos[4][2];
         {
             for(size_t i = 0;i<4;i++){
                 msg = recibir(socket_dispatch);
@@ -253,22 +265,20 @@ void *dispatch_routine(void* socket){
             }
         }
         ////////////// Recibiendo Instrucciones//////////////
-        char **instrucciones;
-        uint32_t cantidad = 0;
-        //uint32_t cantidad = 0;
+        msg = recibir(socket_dispatch);
+        cantidad = *((uint32_t *)msg);
+        free(msg);
+        msg = NULL;
         {
-            while(tamanio_restante > 0)
+            instrucciones = (char **)malloc(sizeof(char *) * (cantidad));
+            for(uint32_t i = 0; i <cantidad; i++)//chequear con gonza
             {
                 msg = recibir(socket_dispatch);
-                instrucciones = (char **)realloc(instrucciones, sizeof(char *) * (cantidad + 1)); ///TODO: Revisar realloc, no es necesario.
-                instrucciones[cantidad] = msg;
+                instrucciones[i] = msg;
                 msg = NULL;
-
-                tamanio_restante -= (strlen(instrucciones[cantidad]) + 1 + sizeof(int));
-                cantidad++;
             }
         }
-        ////////////// Creando contexto //////////////
+        ////////////// Actualizando contexto //////////////
         
         {
             mi_contexto->id = id;
@@ -284,29 +294,64 @@ void *dispatch_routine(void* socket){
         }
 
         sem_post(&sem_ciclo_instruccion);
-        ////////////// Esperando para enviar contexto //////////////
-        sem_wait(&sem_envio_contexto);//este sem se frena para esperar la devolucion del contexto
-        logger_cpu_info(logger,"realizando envio contexto");
-        paquete = crear_paquete(EXIT_PROCESO);
-        agregar_a_paquete(paquete,(void *)&(mi_contexto->id),sizeof(uint32_t));
-        agregar_a_paquete(paquete,(void *)&(mi_contexto->program_counter),sizeof(uint32_t));
-        agregar_a_paquete(paquete,(void*)&(mi_contexto->dispositivo),strlen(mi_contexto->dispositivo));
-        agregar_a_paquete(paquete,(void *)&(mi_contexto->unidades),sizeof(uint32_t));
-        for(size_t i = 0; i<4;i++)
-        {
-            agregar_a_paquete(paquete,(void *)&(mi_contexto->registros[i]),sizeof(uint32_t));
-        }
-        for(size_t i = 0; i<4; i++){
-            agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos[i][0]),sizeof(uint32_t));
-            agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos[i][1]),sizeof(uint32_t));
-        }
-        for(size_t i = 0;i<cantidad;i++){
-            agregar_a_paquete(paquete,(void *)&(mi_contexto->instrucciones[i]),strlen(mi_contexto->instrucciones[i])+1);
-        }
-        enviar_paquete(paquete,socket_dispatch);
-        eliminar_paquete(paquete);
-    }
         
+        sem_wait(&sem_envio_contexto);
+        ////////////// Esperando para enviar contexto //////////////
+        logger_cpu_info(logger,"realizando envio contexto");
+        switch(mi_contexto -> pipeline.operacion){
+            case DESALOJO_PROCESO:
+                paquete = crear_paquete(mi_contexto -> pipeline.operacion);
+                agregar_a_paquete(paquete,(void *)&(mi_contexto->id),sizeof(uint32_t));
+                agregar_a_paquete(paquete,(void *)&(mi_contexto->program_counter),sizeof(uint32_t));
+                for(size_t i = 0; i<4;i++)
+                {
+                    agregar_a_paquete(paquete,(void *)&(mi_contexto->registros[i]),sizeof(uint32_t));
+                }
+                for(size_t i = 0; i<4; i++){
+                    agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos[i][0]),sizeof(uint32_t));
+                    agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos[i][1]),sizeof(uint32_t));
+                }
+                enviar_paquete(paquete,socket_dispatch);
+                eliminar_paquete(paquete);
+                break;
+            case EXIT_PROCESO:
+                paquete = crear_paquete(mi_contexto -> pipeline.operacion);
+                agregar_a_paquete(paquete,(void *)&(mi_contexto->id),sizeof(uint32_t));
+                agregar_a_paquete(paquete,(void *)&(mi_contexto->program_counter),sizeof(uint32_t));
+                for(size_t i = 0; i<4;i++)
+                {
+                    agregar_a_paquete(paquete,(void *)&(mi_contexto->registros[i]),sizeof(uint32_t));
+                }
+                for(size_t i = 0; i<4; i++){
+                    agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos[i][0]),sizeof(uint32_t));
+                    agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos[i][1]),sizeof(uint32_t));
+                }
+                enviar_paquete(paquete,socket_dispatch);
+                eliminar_paquete(paquete);
+                break;
+            case BLOQUEO_PROCESO:
+                paquete = crear_paquete(mi_contexto -> pipeline.operacion);
+                agregar_a_paquete(paquete,(void *)&(mi_contexto->id),sizeof(uint32_t));
+                agregar_a_paquete(paquete,(void *)&(mi_contexto->program_counter),sizeof(uint32_t));
+                agregar_a_paquete(paquete,(void*)&(mi_contexto->dispositivo),strlen(mi_contexto->dispositivo));
+                agregar_a_paquete(paquete,(void *)&(mi_contexto->unidades),sizeof(uint32_t));
+                for(size_t i = 0; i<4;i++)
+                {
+                    agregar_a_paquete(paquete,(void *)&(mi_contexto->registros[i]),sizeof(uint32_t));
+                }
+                for(size_t i = 0; i<4; i++){
+                    agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos[i][0]),sizeof(uint32_t));
+                    agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos[i][1]),sizeof(uint32_t));
+                }
+                enviar_paquete(paquete,socket_dispatch);
+                eliminar_paquete(paquete);
+                break;
+            default:
+                log_error(logger,"Llego codigo desconocido a devolver el contexto, Dispatch");
+                break;
+        }
+        
+    }  
     pthread_exit(return_status);
 }
 
@@ -316,30 +361,30 @@ void *interrupt_routine(void* socket){
 
     int socket_cliente = *(int *)socket;
     op_code codigo_operacion;
-    int __attribute__((unused)) tamaño_paquete;
     void* msg;
     t_paquete* paquete;
+    int flag_interrupcion = 0;
+    ///////////// Inicializando Logger /////////////
+    t_log *logger;
+    {
+        char buffer[25];
+        sprintf(buffer, "Cpu - Kernel interrupt");
+        logger = log_create("./Cpu.log", buffer, 0, LOG_LEVEL_INFO);
+    }
+
 
     while (1)
     {
         codigo_operacion = recibir_operacion(socket_cliente);
-        tamaño_paquete = largo_paquete(socket_cliente);
-
         switch(codigo_operacion) {
-            case MENSAJE:
+            case DESALOJO_PROCESO:
                 msg = recibir(socket_cliente);
-                printf("Recibi el mensaje: %s\nEn el socket: %d\n", (char*) msg, socket_cliente);
-
-                char* respuesta = "Recibido";
-                paquete = crear_paquete(RESPUESTA);
-                agregar_a_paquete(paquete, (void*) respuesta, strlen(respuesta) + 1);
-                enviar_paquete(paquete, socket_cliente);
-                eliminar_paquete(paquete);
-
+                log_info(logger,"Recibi el mensaje: %s\nEn el socket: %d\n", (char*) msg, socket_cliente);
                 free(msg);
+                flag_interrupcion = 1;
                 break;
             default:
-                perror("Recibí una operacion inesperada. Terminando programa.\n");
+                log_error(logger,"recibi codigo de operacion invalido en interrupt, cerrando el hilo");
                 *return_status = 1;
                 pthread_exit(return_status);
                 break;          

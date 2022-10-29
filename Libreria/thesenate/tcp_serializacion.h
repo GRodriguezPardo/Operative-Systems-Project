@@ -29,6 +29,7 @@ typedef enum op_code
     DESALOJO_PROCESO,
     EXIT_PROCESO,
     BLOQUEO_PROCESO,
+    INTERRUPCION,
     PROXIMO_PCB,
     CONTEXTO
 }op_code;

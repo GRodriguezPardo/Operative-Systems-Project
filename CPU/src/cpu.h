@@ -10,6 +10,10 @@ void *ciclo_instruccion(void *config);
 
 t_contexto *mi_contexto;
 
+void **pipeline;
+
+int flag_interrupcion;
+
 sem_t sem;
 sem_t sem_ciclo_instruccion;
 sem_t sem_envio_contexto;
