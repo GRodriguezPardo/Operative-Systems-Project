@@ -256,8 +256,7 @@ void *dispatch_routine(void* socket){
             for(uint32_t i = 0; i <cantidad; i++)
             {
                 msg = recibir(socket_dispatch);
-                instrucciones[i] = (char*)msg;
-                free(msg);
+                instrucciones[i] = msg;
                 msg = NULL;
             }
         }
