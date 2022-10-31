@@ -146,8 +146,10 @@ void* ciclo_instruccion(void* config){
         {
             if(flag_interrupcion == 1){
                 if(pid_interrupt == mi_contexto->id){
-                    devolverContexto = true;
-                    mi_contexto -> pipeline.operacion = DESALOJO_PROCESO;
+                    if(mi_contexto->pipeline.operacion == PROXIMO_PCB){
+                        devolverContexto = true;
+                        mi_contexto -> pipeline.operacion = DESALOJO_PROCESO;
+                    }
                 }
             }
         }
@@ -222,7 +224,7 @@ void *dispatch_routine(void* socket){
             exit(EXIT_FAILURE);
         }
 
-        
+        mi_contexto->pipeline.operacion = PROXIMO_PCB;
         msg = recibir(socket_dispatch);
         id = *((uint32_t*)msg);
         free(msg);
@@ -288,6 +290,8 @@ void *dispatch_routine(void* socket){
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos),sizeof(t_segmento)*4);
                 enviar_paquete(paquete,socket_dispatch);
                 eliminar_paquete(paquete);
+                free(msg);
+                free(instrucciones);
                 break;
             case EXIT_PROCESO:
                 paquete = crear_paquete(mi_contexto -> pipeline.operacion);
@@ -297,6 +301,8 @@ void *dispatch_routine(void* socket){
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos),sizeof(t_segmento)*4);
                 enviar_paquete(paquete,socket_dispatch);
                 eliminar_paquete(paquete);
+                free(msg);
+                free(instrucciones);
                 break;
             case BLOQUEO_PROCESO:
                 paquete = crear_paquete(mi_contexto -> pipeline.operacion);
@@ -308,6 +314,8 @@ void *dispatch_routine(void* socket){
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->unidades),sizeof(uint32_t));
                 enviar_paquete(paquete,socket_dispatch);
                 eliminar_paquete(paquete);
+                free(msg);
+                free(instrucciones);
                 break;
             default:
                 log_error(logger,"Llego codigo desconocido a devolver el contexto, Dispatch");
