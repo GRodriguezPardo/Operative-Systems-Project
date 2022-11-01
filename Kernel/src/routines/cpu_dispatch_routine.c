@@ -30,9 +30,6 @@ void *cpu_dispatch_routine(void *config)
             tamaño_paquete = largo_paquete(socket);
         }
 
-        /////// WAITING FOR A CONSOLE TO BE READY ///////
-        //sem_wait(&sem_proceso_entro_a_ready);
-
         /////// DEALING WITH CASES ///////
         t_pcb* unPcb = NULL;
         switch (codigo_operacion)

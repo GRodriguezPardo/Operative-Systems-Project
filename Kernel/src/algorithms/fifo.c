@@ -42,10 +42,3 @@ void fifo_sale_de_exec(t_pcb* pcb __attribute__((unused)), op_code __attribute__
 {
     return;
 }
-
-void fifo_clock_routine()
-{
-    sem_t aux;
-    sem_init(&aux, 0, 0);
-    sem_wait(&aux);
-}

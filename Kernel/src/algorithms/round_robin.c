@@ -10,20 +10,15 @@
 
 t_queue *cola_algoritmo_rr;
 pthread_mutex_t mutex_cola_rr;
-pthread_mutex_t mutex_reloj_rr;
-sem_t sem_clock_rr;
+unsigned int QUANTUM; 
 
-short clock_time;
-short QUANTUM;
+void* rr_clock_interrupt(void* param);
 
 void rr_init_algoritmo()
 {
     cola_algoritmo_rr = queue_create();
     pthread_mutex_init(&mutex_cola_rr, NULL);
-    pthread_mutex_init(&mutex_reloj_rr, NULL);
-    sem_init(&sem_clock_rr, 0, 0);
-    QUANTUM = 2;
-    clock_time = QUANTUM;
+    QUANTUM = 1500; /// TODO: Reemplazar por valor de config;
 }
 
 void rr_final_algoritmo()
@@ -46,45 +41,34 @@ t_pcb *rr_obtener_siguiente_exec()
     t_pcb* pcb = (t_pcb *)queue_pop(cola_algoritmo_rr);
     pthread_mutex_unlock(&mutex_cola_rr);
 
-    for (size_t i = 0; i < QUANTUM; i++)
+    //rr_clock_interrupt(pcb->id);
+    uint32_t* id;
+    pthread_t thread_id;
     {
-        sem_trywait(&sem_clock_rr);
+        id = (uint32_t*)malloc(sizeof(uint32_t));
+        *id = pcb->id;
     }
+    pthread_create(&thread_id, NULL, rr_clock_interrupt, (void*) id);
 
-    pthread_mutex_lock(&mutex_reloj_rr);
-    clock_time = QUANTUM;
-    pthread_mutex_unlock(&mutex_reloj_rr);
-
-    for (size_t i = 0; i < QUANTUM; i++)
-    {
-        sem_post(&sem_clock_rr);
-    }
     return pcb;
 }
 
 void rr_sale_de_exec(t_pcb* pcb __attribute__((unused)), op_code __attribute__((unused)) source)
 {
-    for (size_t i = 0; i < QUANTUM; i++)
-    {
-        sem_trywait(&sem_clock_rr);
-    }
-
-    pthread_mutex_lock(&mutex_reloj_rr);
-    clock_time = QUANTUM;
-    pthread_mutex_unlock(&mutex_reloj_rr);
+    return;
 }
 
-void rr_clock_interrupt()
+void* rr_clock_interrupt(void* param)
 {
-    while(clock_time > 0)
-    {
-        sem_wait(&sem_clock_rr);
-        sleep(1000);
-        pthread_mutex_lock(&mutex_reloj_rr);
-        clock_time--;
-        pthread_mutex_unlock(&mutex_reloj_rr);
-    }
-    pthread_mutex_lock(&mutex_reloj_rr);
-    clock_time = QUANTUM;
-    pthread_mutex_unlock(&mutex_reloj_rr);
+    uint32_t pid = *((uint32_t*) param);
+    
+    sleep(QUANTUM);
+
+    sem_wait(&sem_interrupt_algorithms);
+    global_pid_to_interrupt = pid;
+    sem_post(&sem_interrupt_routine);
+
+    free(param);
+    exit(EXIT_SUCCESS);
+    return NULL;
 }

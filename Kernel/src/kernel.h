@@ -12,10 +12,10 @@ void *consola_routine(void *socket);
 
 t_log* logger_largo_plazo;
 
-void **pipeline;
-uint8_t* status;
 uint8_t *console_status;
 int *console_acumulator;
+
+uint32_t global_pid_to_interrupt;
 
 t_list* console_semaphores;
 t_list* pcb_list;
@@ -26,14 +26,10 @@ sem_t sem_proceso_entro_a_new;
 
 sem_t sem_proceso_entro_a_ready;
 
-pthread_mutex_t mutex_logger;
+sem_t sem_interrupt_routine;
+sem_t sem_interrupt_algorithms;
 
-pthread_mutex_t mutex_pipeline;
-pthread_mutex_t mutex_console_semaphores;
-pthread_mutex_t mutex_status;
-pthread_mutex_t mutex_console_status;
-pthread_mutex_t mutex_console_acumulator;
-pthread_mutex_t mutex_planificador;
+pthread_mutex_t mutex_logger;
 
 pthread_mutex_t mutex_pcb_list;
 pthread_mutex_t mutex_cola_new;
@@ -42,6 +38,5 @@ void (*finalizar_algoritmo)();
 void (*ingresar_a_ready)(t_pcb* pcb, op_code source);
 t_pcb* (*obtener_siguiente_a_exec)();
 void (*sale_de_exec)(t_pcb* pcb, op_code source);
-void (*clock_routine)();
 
 #endif /* KERNEL_H_ */

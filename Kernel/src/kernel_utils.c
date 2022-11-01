@@ -16,8 +16,12 @@ void init_globals_kernel(int grado_multiprogramacion)
 
     sem_init(&sem_grado_multiprogramacion, 0, grado_multiprogramacion);
     sem_init(&sem_proceso_entro_a_new, 0, 0);
+    sem_init(&sem_proceso_entro_a_ready, 0, 0);
+    sem_init(&sem_interrupt_routine, 0, 0);
+    sem_init(&sem_interrupt_algorithms, 0, 1);
 
     pthread_mutex_init(&mutex_logger, NULL);
+    pthread_mutex_init(&mutex_pcb_list, NULL);
     pthread_mutex_init(&mutex_cola_new, NULL);
 
     pcb_list = list_create();
@@ -88,7 +92,6 @@ bool configurar_algoritmo(char* algortimo)
         ingresar_a_ready = fifo_ingresar_a_ready;
         obtener_siguiente_a_exec = fifo_obtener_siguiente_exec;
         sale_de_exec = fifo_sale_de_exec;
-        clock_routine = fifo_clock_routine;
         return 0;
     } 
     else if (strcmp(algortimo, "RR") == 0)
@@ -98,7 +101,6 @@ bool configurar_algoritmo(char* algortimo)
         ingresar_a_ready = rr_ingresar_a_ready;
         obtener_siguiente_a_exec = rr_obtener_siguiente_exec;
         sale_de_exec = rr_sale_de_exec;
-        clock_routine = rr_clock_interrupt;
         return 0;
     }
     return 1;

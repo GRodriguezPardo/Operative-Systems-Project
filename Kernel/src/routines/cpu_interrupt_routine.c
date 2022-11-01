@@ -1,6 +1,7 @@
 #include <commons/log.h>
 #include <commons/config.h>
 #include <pthread.h>
+#include <semaphore.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,34 +19,23 @@ void *cpu_interrupt_routine(void *config)
         socket = crear_conexion(ipCPU,puertoServidor);
     }
     
-    op_code codigo_operacion;
-    int  __attribute__((unused)) tamaño_paquete;
     t_paquete *paquete;
+    uint32_t local_pid_to_interrupt;
     
     while(1)
     {
-        clock_routine();
+        sem_wait(&sem_interrupt_routine);
+
+        local_pid_to_interrupt = global_pid_to_interrupt;
+
+        sem_post(&sem_interrupt_algorithms);
 
         paquete = crear_paquete(DESALOJO_PROCESO);
+        agregar_a_paquete(paquete, (void *) &local_pid_to_interrupt, sizeof(uint32_t));
         enviar_paquete(paquete, socket);
         eliminar_paquete(paquete);
 
-        printf("\nMensaje enviado.\nEsperando respuesta...\n");
-
-        codigo_operacion = recibir_operacion(socket);
-        tamaño_paquete = largo_paquete(socket);
-
-        switch (codigo_operacion)
-        {
-            case RESPUESTA:
-                continue;
-                break;
-            default:
-                perror("Recibí una operacion inesperada. Terminando programa.");
-                liberar_conexion(socket);
-                exit(EXIT_FAILURE);
-                break;
-        }
+        printf("\nMensaje enviado.\n");
     }
     
     printf("Terminando programa.\n");

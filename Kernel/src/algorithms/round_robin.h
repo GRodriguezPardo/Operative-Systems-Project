@@ -12,6 +12,5 @@ void rr_final_algoritmo();
 void rr_ingresar_a_ready(t_pcb* pcb, op_code source);
 t_pcb *rr_obtener_siguiente_exec();
 void rr_sale_de_exec(t_pcb* pcb, op_code source);
-void rr_clock_interrupt();
 
 #endif /* ROUND_ROBIN_H_ */

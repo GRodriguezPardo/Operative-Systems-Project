@@ -13,10 +13,11 @@
 extern t_log* logger_largo_plazo;
 
 ////////////// ESTADO DEL KERNEL //////////////
-extern void **pipeline;
-extern uint8_t* status;
 extern uint8_t *console_status;
 extern int *console_acumulator;
+
+////////////// ESTADO DE INTERRUPT ROUTINE //////////////
+extern uint32_t global_pid_to_interrupt;
 
 ////////////// ESTRUCTURAS DE DATOS //////////////
 extern t_list* pcb_list;
@@ -29,16 +30,15 @@ extern sem_t sem_proceso_entro_a_new;
 ////////////// SEMAFOROS PLANIFICADOR CORTO PLAZO //////////////
 extern sem_t sem_proceso_entro_a_ready;
 
+////////////// SEMAFOROS INTERRUPT ROUTINE //////////////
+extern sem_t sem_interrupt_routine;
+extern sem_t sem_interrupt_algorithms;
+
 ////////////// MUTEX LOGGER //////////////
 extern pthread_mutex_t mutex_logger;
 
 ////////////// MUTEX ESTADO DEL KERNEL //////////////
-extern pthread_mutex_t mutex_pipeline;
-extern pthread_mutex_t mutex_console_semaphores;
-extern pthread_mutex_t mutex_status;
-extern pthread_mutex_t mutex_console_status;
-extern pthread_mutex_t mutex_console_acumulator;
-extern pthread_mutex_t mutex_planificador;
+
 
 ////////////// MUTEX ESTRUCTURAS DE DATOS //////////////
 extern pthread_mutex_t mutex_pcb_list;
@@ -72,6 +72,5 @@ extern void (*finalizar_algoritmo)();
 extern void (*ingresar_a_ready)(t_pcb* pcb, op_code source);
 extern t_pcb* (*obtener_siguiente_a_exec)();
 extern void (*sale_de_exec)(t_pcb* pcb, op_code source);
-extern void (*clock_routine)();
 
 #endif /* GLOBALS_H_ */
