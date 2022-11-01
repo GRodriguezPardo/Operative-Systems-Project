@@ -78,7 +78,7 @@ void* ciclo_instruccion(void* config){
                     }else if(!strcmp(oper1,"DX")){
                         register1 = 3;
                     }        
-                    sleep(retardo_instruccion);
+                    usleep(retardo_instruccion * 1000);
                     instruction_code = 0;
                 }else if(!strcmp(op,"ADD")){
                     if(!strcmp(oper1,"AX")){
@@ -99,7 +99,7 @@ void* ciclo_instruccion(void* config){
                     }else if(!strcmp(oper2,"DX")){
                         register2 = 3;
                     }
-                    sleep(retardo_instruccion);
+                    usleep(retardo_instruccion * 1000);
                     instruction_code = 1;   
                 }else if(!strcmp(op,"MOV_IN")){
                     instruction_code = 2;

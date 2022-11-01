@@ -62,7 +62,7 @@ void* rr_clock_interrupt(void* param)
 {
     uint32_t pid = *((uint32_t*) param);
     
-    sleep(QUANTUM);
+    usleep(QUANTUM * 1000);
 
     sem_wait(&sem_interrupt_algorithms);
     global_pid_to_interrupt = pid;

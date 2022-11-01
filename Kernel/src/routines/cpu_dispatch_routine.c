@@ -11,6 +11,8 @@
 #include "../globals.h"
 #include "../kernel_utils.h"
 
+t_log* logger_dispatch;
+
 void *cpu_dispatch_routine(void *config)
 {
     int socket;
@@ -19,6 +21,7 @@ void *cpu_dispatch_routine(void *config)
         puertoServidor = config_get_string_value((t_config *)config, "PUERTO_CPU_DISPATCH");
         ipCPU = config_get_string_value((t_config *)config, "IP_CPU");
         socket = crear_conexion(ipCPU, puertoServidor);
+        logger_dispatch = log_create("../kernel.log", "Kernel - Dispatch", false, LOG_LEVEL_INFO);
     }
     
     while (1)
@@ -36,6 +39,7 @@ void *cpu_dispatch_routine(void *config)
         {
         case INIT_CPU:
             give_cpu_next_pcb(socket);
+            logger_monitor_info(logger_dispatch, "Inicializando CPU");
             break;
         case DESALOJO_PROCESO:
             unPcb = obtener_y_actualizar_pcb_recibido(socket);
@@ -92,6 +96,12 @@ void give_cpu_next_pcb(int socket)
         enviar_paquete(paquete, socket);
         eliminar_paquete(paquete);
     }
+
+    {   ////////////// LOGGEANDO //////////////
+        pthread_mutex_lock(&mutex_logger);
+        log_info(logger_dispatch, "Enviando al proceso %lu a ejecutar", (unsigned long)(unPcb->id));
+        pthread_mutex_unlock(&mutex_logger);
+    }
 }
 
 t_pcb *obtener_y_actualizar_pcb_recibido(int socket)
@@ -142,6 +152,12 @@ t_pcb *obtener_y_actualizar_pcb_recibido(int socket)
     }
     pthread_mutex_unlock(&mutex_pcb_list);
 
+    {   ////////////// LOGGEANDO //////////////
+        pthread_mutex_lock(&mutex_logger);
+        log_info(logger_dispatch, "El proceso %lu salio de ejecucion", (unsigned long)(unPcb->id));
+        pthread_mutex_unlock(&mutex_logger);
+    }
+
     return unPcb;
 }
 
@@ -151,4 +167,10 @@ void finalizar_proceso(t_pcb* unPcb)
     unPcb -> pipeline.valor=0;
     sem_post(&(unPcb -> console_semaphore));
     sem_post(&sem_grado_multiprogramacion);
+
+    {   ////////////// LOGGEANDO //////////////
+        pthread_mutex_lock(&mutex_logger);
+        log_info(logger_dispatch, "El proceso %lu ha llegado a exit", (unsigned long)(unPcb->id));
+        pthread_mutex_unlock(&mutex_logger);
+    }
 }

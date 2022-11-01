@@ -156,7 +156,7 @@ void *consola_routine(void *param)
                 }
                 tamanio_paquete = largo_paquete(socket_cliente);
 
-                sleep(10000); // TODO: Reemplazar por el tiempo adecuado.
+                usleep(1000 * 1000); // TODO: Reemplazar por el tiempo adecuado.
 
                 mi_pcb->pipeline.operacion = CONSOLE_OUTPUT_RESPUESTA;
                 finalizar_IO(mi_pcb->id);
