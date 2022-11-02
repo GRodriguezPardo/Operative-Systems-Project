@@ -62,7 +62,7 @@ void* rr_clock_interrupt(void* param)
 {
     uint32_t pid = *((uint32_t*) param);
     
-    usleep(QUANTUM * 1000);
+    usleep(QUANTUM * 1000); // EN la config el Quantum esta en milisegundos (2000 en el ejemplo) por lo que no deberia multiplicarse por 1000
 
     sem_wait(&sem_interrupt_algorithms);
     global_pid_to_interrupt = pid;
