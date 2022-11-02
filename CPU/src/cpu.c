@@ -155,6 +155,7 @@ void* ciclo_instruccion(void* config){
         }
         if(devolverContexto){
             sem_post(&sem_envio_contexto);
+            sem_wait(&sem_ciclo_instruccion);
         }
         
     }
