@@ -105,7 +105,7 @@ void* ciclo_instruccion(void* config){
                     instruction_code = 2;
                 }else if(!strcmp(op,"MOV_OUT")){
                     instruction_code = 3;
-                }else if(!strcmp(op,"I/0")){
+                }else if(!strcmp(op,"I/O")){
                     instruction_code = 4;
                 }else if(!strcmp(op,"EXIT")){
                     instruction_code = 5;
