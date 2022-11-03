@@ -24,6 +24,10 @@ typedef enum op_code
     I_O,
     EXIT,
 
+    // COMUNICACION - MEMORIA
+    CPU_ACK,
+    KERNEL_ACK,
+
     // KERNEL - CPU
     INIT_CPU,
     DESALOJO_PROCESO,
