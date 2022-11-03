@@ -5,6 +5,7 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS_UTILS += \
 ../src/memoria_utils.c \
+../src/swap.c \
 $(shell find ../src/routines/ -iname "*.c" | tr '\n' ' ') \
 
 C_SRCS_UTILS_AUX = $(patsubst ../%,./%,$(C_SRCS_UTILS))

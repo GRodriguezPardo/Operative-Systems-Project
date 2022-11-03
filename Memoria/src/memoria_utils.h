@@ -7,11 +7,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-void memoria_iniciar();
-void esperarHilos();
-void memoria_finalizar();
+void esperar_hilos();
+void finalizar_memoria();
 
-//Atiende y responde al handshake del cliente.
-void resolverHandshake(int, op_code);
-//Responde al handshake del cliente.
+void loggear_info(t_log *, char *);
+void loggear_error(t_log *, char *);
+
+//Atiende el handshake del cliente.
+void recibirHandshake(int, op_code);
 #endif //MEMORIA_UTILS_H_

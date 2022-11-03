@@ -5,8 +5,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-int swapFd;
-
 void swap_inicializar();
 void swap_cerrar();
 
