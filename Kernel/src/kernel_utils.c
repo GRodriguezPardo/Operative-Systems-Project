@@ -7,6 +7,7 @@
 #include <string.h>
 #include "algorithms/fifo.h"
 #include "algorithms/round_robin.h"
+#include "algorithms/feedback.h"
 #include "kernel_utils.h"
 #include "globals.h"
 
@@ -101,6 +102,15 @@ bool configurar_algoritmo(char* algortimo)
         ingresar_a_ready = rr_ingresar_a_ready;
         obtener_siguiente_a_exec = rr_obtener_siguiente_exec;
         sale_de_exec = rr_sale_de_exec;
+        return 0;
+    }
+        else if (strcmp(algortimo, "FEEDBACK") == 0)
+    {
+        feedback_init_algoritmo();
+        finalizar_algoritmo = feedback_final_algoritmo;
+        ingresar_a_ready = feedback_ingresar_a_ready;
+        obtener_siguiente_a_exec = feedback_obtener_siguiente_exec;
+        sale_de_exec = feedback_sale_de_exec;
         return 0;
     }
     return 1;
