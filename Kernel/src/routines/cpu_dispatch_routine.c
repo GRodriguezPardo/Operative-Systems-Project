@@ -35,6 +35,8 @@ void *cpu_dispatch_routine(void *config)
 
         /////// DEALING WITH CASES ///////
         t_pcb* unPcb = NULL;
+        char* dispositivo = NULL;
+        uint32_t* unidades = NULL;
         switch (codigo_operacion)
         {
         case INIT_CPU:
@@ -58,7 +60,26 @@ void *cpu_dispatch_routine(void *config)
             give_cpu_next_pcb(socket);
             break;
         case BLOQUEO_PROCESO:
+            unPcb = obtener_y_actualizar_pcb_recibido(socket);
             sale_de_exec(unPcb, BLOQUEO_PROCESO);
+            {
+                dispositivo = (char*)recibir(socket);
+                unidades = (uint32_t*)recibir(socket);
+
+                pthread_mutex_lock(&mutex_logger);
+                log_info(logger_dispatch, "Bloqueo proceso %u - %s - %u", unPcb->id, dispositivo, *unidades);
+                pthread_mutex_unlock(&mutex_logger);
+
+                ///TODO: Realizar entrada/salida
+
+                free(dispositivo);
+                free(unidades);
+                dispositivo = NULL;
+                unidades = NULL;
+            }         
+            
+
+            give_cpu_next_pcb(socket);
             break;
         default:
             exit(EXIT_FAILURE);
