@@ -47,6 +47,8 @@ extern pthread_mutex_t mutex_dispatch_response;
 
 extern pthread_mutex_t mutex_ejecucion;
 
+extern pthread_mutex_t mutex_flag;
+
 extern uint32_t pid_interrupt;
 
 
@@ -55,5 +57,6 @@ extern uint32_t pid_interrupt;
 extern sem_t sem;
 extern sem_t sem_ciclo_instruccion;
 extern sem_t sem_envio_contexto;
+
 
 #endif 

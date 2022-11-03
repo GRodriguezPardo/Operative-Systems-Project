@@ -58,16 +58,22 @@ void* ciclo_instruccion(void* config){
     bool devolverContexto;
     ////////////// FETCH //////////////
     sem_wait(&sem_ciclo_instruccion);
+    pthread_mutex_lock(&mutex_logger);
     log_info(logger_cpu_ciclo,"%s",mi_contexto->instrucciones[mi_contexto->program_counter]);
+    pthread_mutex_unlock(&mutex_logger);
     while(1){
             {
             instruccion = mi_contexto->instrucciones[mi_contexto->program_counter];
             }
         ////////////// DECODE //////////////
+            pthread_mutex_lock(&mutex_logger);
             log_info(logger_cpu_ciclo,"%s",instruccion);
+            pthread_mutex_unlock(&mutex_logger);
             {
                 sscanf(instruccion, "%s %s %s", op, oper1, oper2);
+                pthread_mutex_lock(&mutex_logger);
                 log_info(logger_cpu_ciclo,"la operacion es :%s",op);
+                pthread_mutex_unlock(&mutex_logger);
                 if(!strcmp(op,"SET")){
                     if(!strcmp(oper1,"AX")){
                         register1 = 0;
@@ -109,9 +115,6 @@ void* ciclo_instruccion(void* config){
                     instruction_code = 4;
                 }else if(!strcmp(op,"EXIT")){
                     instruction_code = 5;
-                }else{
-                    perror("instruccion invalida, devolviendo el contexto");
-                    devolverContexto = true;
                 }
             }
             ////////////// EXECUTE //////////////
@@ -141,12 +144,17 @@ void* ciclo_instruccion(void* config){
                 }
             }
         mi_contexto->program_counter++;
+        pthread_mutex_lock(&mutex_logger);
         log_info(logger_cpu_ciclo,"PID:%d - Ejecutando: %s - %s - %s",mi_contexto->id,op,oper1,oper2);
+        pthread_mutex_unlock(&mutex_logger);
         ////////////// CHECK INTERRUPT //////////////
         {
             if(flag_interrupcion == 1){
                 if(pid_interrupt == mi_contexto->id){
                     if(mi_contexto->pipeline.operacion == PROXIMO_PCB){
+                        pthread_mutex_lock(&mutex_flag);
+                        flag_interrupcion = 0;
+                        pthread_mutex_unlock(&mutex_flag);
                         devolverContexto = true;
                         mi_contexto -> pipeline.operacion = DESALOJO_PROCESO;
                     }
@@ -154,6 +162,7 @@ void* ciclo_instruccion(void* config){
             }
         }
         if(devolverContexto){
+            devolverContexto = false;
             sem_post(&sem_envio_contexto);
             sem_wait(&sem_ciclo_instruccion);
         }
@@ -264,7 +273,9 @@ void *dispatch_routine(void* socket){
             }
         }
         ////////////// Actualizando contexto //////////////
+        pthread_mutex_lock(&mutex_logger);
         log_info(logger,"%s",instrucciones[0]);
+        pthread_mutex_unlock(&mutex_logger);
         {
             mi_contexto->id = id;
             mi_contexto->program_counter = pc;
@@ -282,6 +293,7 @@ void *dispatch_routine(void* socket){
         sem_wait(&sem_envio_contexto);
         ////////////// Esperando para enviar contexto //////////////
         logger_cpu_info(logger,"realizando envio contexto");
+        
         switch(mi_contexto -> pipeline.operacion){
             case DESALOJO_PROCESO:
                 paquete = crear_paquete(mi_contexto -> pipeline.operacion);
@@ -325,7 +337,9 @@ void *dispatch_routine(void* socket){
                 free(instrucciones);
                 break;
             default:
+                pthread_mutex_lock(&mutex_logger);
                 log_error(logger,"Llego codigo desconocido a devolver el contexto, Dispatch");
+                pthread_mutex_unlock(&mutex_logger);
                 break;
         }
         
@@ -355,13 +369,19 @@ void *interrupt_routine(void* socket){
         switch(codigo_operacion) {
             case DESALOJO_PROCESO:
                 msg = recibir(socket_cliente);
+                pthread_mutex_lock(&mutex_logger);
                 log_info(logger,"Recibi el mensaje: %s\nEn el socket: %d\n", (char*) msg, socket_cliente);
+                pthread_mutex_unlock(&mutex_logger);
                 pid_interrupt = *((uint32_t*)msg);
                 free(msg);
+                pthread_mutex_lock(&mutex_flag);
                 flag_interrupcion = 1;
+                pthread_mutex_unlock(&mutex_flag);
                 break;
             default:
+                pthread_mutex_lock(&mutex_logger);
                 log_error(logger,"recibi codigo de operacion invalido en interrupt, cerrando el hilo");
+                pthread_mutex_unlock(&mutex_logger);
                 *return_status = 1;
                 pthread_exit(return_status);
                 break;          
