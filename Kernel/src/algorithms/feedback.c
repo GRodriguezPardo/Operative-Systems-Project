@@ -91,6 +91,5 @@ void *feedback_clock_interrupt(void *param)
     sem_post(&sem_interrupt_routine);
 
     free(param);
-    exit(EXIT_SUCCESS);
     return NULL;
 }

@@ -90,6 +90,5 @@ void* blocked_process_routine(void* param)
     sem_post(&sem_proceso_entro_a_ready);
 
     free(param);
-    //exit(EXIT_SUCCESS);
     return NULL;
 }
