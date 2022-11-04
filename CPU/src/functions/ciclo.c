@@ -87,7 +87,20 @@ void* ciclo_instruccion(void* config){
                         break;
                     case 4://I/O
                         mi_contexto->dispositivo = oper1;
-                        mi_contexto->unidades = (uint32_t)atoi(oper2);
+                        if(!strcmp(mi_contexto->dispositivo,"TECLADO") || !strcmp(mi_contexto->dispositivo,"PANTALLA")){
+                            if(!strcmp(oper2,"AX")){
+                                mi_contexto->unidades = 0;
+                            } else if(!strcmp(oper2,"BX")){
+                                mi_contexto->unidades = 1;
+                            }else if(!strcmp(oper2,"CX")){
+                                mi_contexto->unidades = 2;
+                            }else if(!strcmp(oper2,"DX")){
+                                mi_contexto->unidades = 3;
+                            }
+                        }else{
+                            mi_contexto->unidades = (uint32_t)atoi(oper2);
+                        }
+                                                
                         devolverContexto = true;
                         mi_contexto -> pipeline.operacion = BLOQUEO_PROCESO; //pensar prioridades de razones para desalojar
                         break;
