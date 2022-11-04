@@ -29,6 +29,31 @@ int main(int argc, char** argv)
     int grado_multiprogramacion = config_get_int_value(config, "GRADO_MAX_MULTIPROGRAMACION");
     init_globals_kernel(grado_multiprogramacion);
 
+    ////////////// INICIANDO DISPOTIVOS I/O //////////////
+    {
+        dispositivos_IO = config_get_array_value(config, "DISPOSITIVOS_IO");
+        char** str_tiempos = config_get_array_value(config, "TIEMPOS_IO");
+
+        cantidad_dispositivos_IO = 0;
+
+        for (
+            char* aux = dispositivos_IO[0]; 
+            aux != NULL; 
+            aux = dispositivos_IO[++cantidad_dispositivos_IO]
+        );
+        
+        tiempos_IO = (uint32_t*)malloc(sizeof(uint32_t)*cantidad_dispositivos_IO);
+        sem_dispositivos_IO = (sem_t*)malloc(sizeof(sem_t)*cantidad_dispositivos_IO + 2);
+        sem_init(&(sem_dispositivos_IO[0]),0,1);
+        sem_init(&(sem_dispositivos_IO[1]),0,1);
+
+        for (size_t i = 0; i < cantidad_dispositivos_IO; i++)
+        {
+            tiempos_IO[i] = atoi(str_tiempos[i]);
+            sem_init(&(sem_dispositivos_IO[i+2]),0,1);
+        }
+    }
+
     logger_monitor_info(logger, "Iniciando Kernel.");
 
     ////////////// CONFIGURACION DEL ALGORTIMO //////////////

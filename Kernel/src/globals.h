@@ -19,6 +19,11 @@ extern int *console_acumulator;
 ////////////// ESTADO DE INTERRUPT ROUTINE //////////////
 extern uint32_t global_pid_to_interrupt;
 
+////////////// ESTADO DE IO //////////////
+extern char** dispositivos_IO;
+extern uint32_t* tiempos_IO;
+extern size_t cantidad_dispositivos_IO;
+
 ////////////// ESTRUCTURAS DE DATOS //////////////
 extern t_list* pcb_list;
 extern t_queue* cola_estado_new;
@@ -34,11 +39,13 @@ extern sem_t sem_proceso_entro_a_ready;
 extern sem_t sem_interrupt_routine;
 extern sem_t sem_interrupt_algorithms;
 
+////////////// SEMAFOROS I/O //////////////
+extern sem_t* sem_dispositivos_IO;
+
 ////////////// MUTEX LOGGER //////////////
 extern pthread_mutex_t mutex_logger;
 
 ////////////// MUTEX ESTADO DEL KERNEL //////////////
-
 
 ////////////// MUTEX ESTRUCTURAS DE DATOS //////////////
 extern pthread_mutex_t mutex_pcb_list;
@@ -64,6 +71,7 @@ typedef struct t_pcb
     uint32_t registros[4];
     t_segmento_pcb segmentos[4];
     sem_t console_semaphore;
+    sem_t console_waiter_semaphore;
     t_pipeline pipeline;
 } t_pcb;
 

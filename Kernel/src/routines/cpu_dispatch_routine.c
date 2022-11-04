@@ -8,6 +8,7 @@
 #include <thesenate/tcp_client.h>
 #include <thesenate/tcp_serializacion.h>
 #include "cpu_dispatch_routine.h"
+#include "blocked_routine.h"
 #include "../globals.h"
 #include "../kernel_utils.h"
 
@@ -66,18 +67,17 @@ void *cpu_dispatch_routine(void *config)
                 dispositivo = (char*)recibir(socket);
                 unidades = (uint32_t*)recibir(socket);
 
+                bloquear_proceso(unPcb, dispositivo, *unidades);
+
                 pthread_mutex_lock(&mutex_logger);
                 log_info(logger_dispatch, "Bloqueo proceso %u - %s - %u", unPcb->id, dispositivo, *unidades);
                 pthread_mutex_unlock(&mutex_logger);
-
-                ///TODO: Realizar entrada/salida
 
                 free(dispositivo);
                 free(unidades);
                 dispositivo = NULL;
                 unidades = NULL;
-            }         
-            
+            }
 
             give_cpu_next_pcb(socket);
             break;

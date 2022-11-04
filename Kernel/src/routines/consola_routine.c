@@ -84,6 +84,7 @@ void *consola_routine(void *param)
         mi_pcb->instrucciones = instrucciones;
         mi_pcb->program_counter = 0;
         sem_init(&(mi_pcb->console_semaphore), 0, 0);
+        sem_init(&(mi_pcb->console_waiter_semaphore), 0, 0);
         mi_pcb->pipeline.operacion = 0;
         mi_pcb->pipeline.valor = 0;
 
@@ -110,11 +111,6 @@ void *consola_routine(void *param)
         {
             sem_wait(&(mi_pcb->console_semaphore));
 
-            if (mi_pcb->pipeline.operacion == EXIT)
-            {
-                break;
-            }
-
             switch (mi_pcb->pipeline.operacion)
             {
             case CONSOLE_INPUT:
@@ -137,7 +133,7 @@ void *consola_routine(void *param)
                 free(input);
                 input = NULL;
 
-                finalizar_IO(mi_pcb->id);
+                sem_post(&(mi_pcb -> console_waiter_semaphore));
                 break;
 
             case CONSOLE_OUTPUT:
@@ -156,10 +152,8 @@ void *consola_routine(void *param)
                 }
                 tamanio_paquete = largo_paquete(socket_cliente);
 
-                usleep(1000 * 1000); // TODO: Reemplazar por el tiempo adecuado.
-
                 mi_pcb->pipeline.operacion = CONSOLE_OUTPUT_RESPUESTA;
-                finalizar_IO(mi_pcb->id);
+                sem_post(&(mi_pcb -> console_waiter_semaphore));
                 break;
             case EXIT:
                 logger_monitor_info(logger, "Finalizando.");

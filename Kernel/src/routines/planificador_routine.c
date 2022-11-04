@@ -48,9 +48,3 @@ void *new_a_ready(void* arg)
         sem_post(&sem_proceso_entro_a_ready);
     }
 }
-
-void finalizar_IO(uint32_t pid){
-    char msg[40];
-    sprintf(msg, "El proceso %d finalizo si I/O.", (int) pid);
-    logger_monitor_info(logger_largo_plazo, msg);
-}
