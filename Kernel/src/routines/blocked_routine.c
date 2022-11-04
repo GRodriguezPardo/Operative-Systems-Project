@@ -82,7 +82,7 @@ void* blocked_process_routine(void* param)
         }
         
         sem_wait(sem_dispositivo);
-        usleep(tiempos_IO[num_dispositivo] * 1000);
+        usleep(tiempos_IO[num_dispositivo] * unidades * 1000);
         sem_post(sem_dispositivo);
     }
 
@@ -90,6 +90,6 @@ void* blocked_process_routine(void* param)
     sem_post(&sem_proceso_entro_a_ready);
 
     free(param);
-    exit(EXIT_SUCCESS);
+    //exit(EXIT_SUCCESS);
     return NULL;
 }

@@ -184,14 +184,14 @@ t_pcb *obtener_y_actualizar_pcb_recibido(int socket)
 
 void finalizar_proceso(t_pcb* unPcb)
 {
-    unPcb -> pipeline.operacion=EXIT;
-    unPcb -> pipeline.valor=0;
-    sem_post(&(unPcb -> console_semaphore));
-    sem_post(&sem_grado_multiprogramacion);
-
     {   ////////////// LOGGEANDO //////////////
         pthread_mutex_lock(&mutex_logger);
         log_info(logger_dispatch, "El proceso %lu ha llegado a exit", (unsigned long)(unPcb->id));
         pthread_mutex_unlock(&mutex_logger);
     }
+    
+    unPcb -> pipeline.operacion=EXIT;
+    unPcb -> pipeline.valor=0;
+    sem_post(&(unPcb -> console_semaphore));
+    sem_post(&sem_grado_multiprogramacion);
 }

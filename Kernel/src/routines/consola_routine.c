@@ -164,7 +164,12 @@ void *consola_routine(void *param)
                     pcb_element_destroyer((void*) mi_pcb);
                 }
                 pthread_mutex_unlock(&mutex_pcb_list);
-                exit(EXIT_SUCCESS);
+
+                paquete = crear_paquete(EXIT);
+                enviar_paquete(paquete, socket_cliente);
+                eliminar_paquete(paquete);
+                
+                return NULL;
             default:
                 perror("Error: Fallo al recibir operacion de IO.\n");
                 logger_monitor_error(logger, "Error: Fallo al recibir operacion de IO.");

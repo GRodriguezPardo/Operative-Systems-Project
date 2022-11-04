@@ -13,7 +13,7 @@ void ingresar_a_new(t_pcb *nuevo_pcb)
 
     char msg[40];
     sprintf(msg, "Se agrega el proceso %d a new.", (int) (nuevo_pcb->id));
-    logger_monitor_info(logger_largo_plazo, msg);
+    //logger_monitor_info(logger_largo_plazo, msg);
 
     sem_post(&sem_proceso_entro_a_new);
 }
@@ -43,7 +43,7 @@ void *new_a_ready(void* arg)
 
         char msg[40];
         sprintf(msg, "Se agrega el proceso %d a ready.", (int) (pcb->id));
-        logger_monitor_info(logger_largo_plazo, msg);
+        //logger_monitor_info(logger_largo_plazo, msg);
 
         sem_post(&sem_proceso_entro_a_ready);
     }
