@@ -39,8 +39,6 @@ void* blocked_process_routine(void* param)
             sem_post(&(unPcb -> console_semaphore));
             sem_wait(&(unPcb -> console_waiter_semaphore));
 
-            usleep(1000 * 1000); ///TODO: Replace for config value;
-
             if(unPcb -> pipeline.operacion != CONSOLE_OUTPUT_RESPUESTA){
                 perror("ERROR INSEPERADO AL RECIBIR CONSOLE OUTPUT EN CONSOLA");
                 exit(EXIT_FAILURE);
