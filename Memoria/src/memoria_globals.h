@@ -2,6 +2,7 @@
 #define MEMORIA_GLOBALS_H_
 
 #include <commons/config.h>
+#include <commons/collections/list.h>
 #include <commons/log.h>
 #include <thesenate/tcp_client.h>
 #include <thesenate/tcp_server.h>
@@ -12,15 +13,15 @@ typedef struct mem_config
 {
     char *ip, 
         *puerto, 
-        *algoritmo_reemplazo, 
-        *path_swap;
-    uint32_t tamanio_memoria, 
-        tamanio_pagina, 
-        entradas_x_tabla, 
-        retardo_memoria,
-        marcos_x_proceso,
-        retardo_swap,
-        tamanio_swap;
+        *algoritmoReemplazo, 
+        *pathSwap;
+    uint32_t tamanioMemoria, 
+        tamanioPagina, 
+        entradasPorTabla, 
+        retardoMemoria,
+        marcosPorProceso,
+        retardoSwap,
+        tamanioSwap;
 } t_memoria_config;
 
 typedef struct t_segmento_pcb {
@@ -34,11 +35,12 @@ extern t_log *logger;
 extern t_memoria_config configMemoria;
 extern pthread_mutex_t mx_logger;
 extern pthread_mutex_t mx_main;
-extern pthread_mutex_t mx_memoria;
+extern pthread_mutex_t mx_memoriaPrincipal;
+extern pthread_mutex_t mx_espacioKernel;
 extern void *memoriaPrincipal;
+extern t_list *espacioKernel;
+extern t_list *tablaFrames;
 extern int swapFd;
-
-//////// VALORES GLOBALES /////////
 
 //////// PUNTEROS A FUNCIONES /////////
 extern void (*reemplazarPagina)();

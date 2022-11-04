@@ -1,16 +1,28 @@
 #include "memoria.h"
 #include <string.h>
 
+static void liberar_espacioKernel();
+
 int main(int argc, char** argv){
     puts("Iniciando módulo memoria...");
 
-    crear_config();
-    crear_logger();    
+    // Iniciando config y logs
+    config = config_create("../memoria.config");
+    if (config == NULL)
+    {
+        perror("Archivo de configuración no encontrado.");
+        exit(EXIT_FAILURE);
+    }
+    logger = log_create("../memoria.log", "Memoria - Main", 0, LOG_LEVEL_INFO);
+    pthread_mutex_init(&mx_logger, NULL);
+
     cargar_configuracion_memoria();
 
-    // Inicializando espacio de datos
-    memoriaPrincipal = malloc(configMemoria.tamanio_memoria);
-    pthread_mutex_init(&mx_memoria, NULL);
+    // Inicializando espacio de datos y de Kernel
+    memoriaPrincipal = malloc(configMemoria.tamanioMemoria); //espacio de usuario
+    pthread_mutex_init(&mx_memoriaPrincipal, NULL);
+    espacioKernel = list_create(); //estructura para las tablas de páginas
+    pthread_mutex_init(&mx_espacioKernel, NULL);
 
     swap_inicializar();
 
@@ -41,10 +53,10 @@ void *atender_conexion(void *socketFd){
     op_code cod_operacion = recibir_operacion(socket);
     switch (cod_operacion)
     {
-    case CPU_ACK:
+    case INIT_CPU:
         cpu_routine(socket, return_status);
         break;
-    case KERNEL_ACK:
+    case INIT_KERNEL:
         kernel_routine(socket, return_status);
         break;
     default:
@@ -55,31 +67,34 @@ void *atender_conexion(void *socketFd){
     pthread_exit(return_status);
 }
 
-
-void crear_config(){
-    config = config_create("../memoria.config");
-    if (config == NULL)
-    {
-        perror("Archivo de configuración no encontrado.");
-        exit(EXIT_FAILURE);
-    }
-}
-
-void crear_logger(){
-    logger = log_create("../memoria.log", "Memoria - Main", 0, LOG_LEVEL_INFO);
-    pthread_mutex_init(&mx_logger, NULL);
-}
-
 void cargar_configuracion_memoria(){
     configMemoria.ip = config_get_string_value(config,"IP_MEMORIA");
     configMemoria.puerto = config_get_string_value(config, "PUERTO_ESCUCHA");
-    configMemoria.tamanio_memoria = (uint32_t)config_get_int_value(config, "TAM_MEMORIA");
-    configMemoria.tamanio_pagina = (uint32_t)config_get_int_value(config, "TAM_PAGINA");
-    configMemoria.entradas_x_tabla = (uint32_t)config_get_int_value(config, "ENTRADAS_POR_TABLA");
-    configMemoria.retardo_memoria = (uint32_t)config_get_int_value(config, "RETARDO_MEMORIA");
-    configMemoria.algoritmo_reemplazo = config_get_string_value(config, "ALGORITMO_REEMPLAZO");
-    configMemoria.marcos_x_proceso = (uint32_t)config_get_int_value(config, "MARCOS_POR_PROCESO");
-    configMemoria.retardo_swap = (uint32_t)config_get_int_value(config, "RETARDO_SWAP");
-    configMemoria.path_swap = config_get_string_value(config, "PATH_SWAP");
-    configMemoria.tamanio_swap = (uint32_t)config_get_int_value(config, "TAMANIO_SWAP");
+    configMemoria.tamanioMemoria = (uint32_t)config_get_int_value(config, "TAM_MEMORIA");
+    configMemoria.tamanioPagina = (uint32_t)config_get_int_value(config, "TAM_PAGINA");
+    configMemoria.entradasPorTabla = (uint32_t)config_get_int_value(config, "ENTRADAS_POR_TABLA");
+    configMemoria.retardoMemoria = (uint32_t)config_get_int_value(config, "RETARDO_MEMORIA");
+    configMemoria.algoritmoReemplazo = config_get_string_value(config, "ALGORITMO_REEMPLAZO");
+    configMemoria.marcosPorProceso = (uint32_t)config_get_int_value(config, "MARCOS_POR_PROCESO");
+    configMemoria.retardoSwap = (uint32_t)config_get_int_value(config, "RETARDO_SWAP");
+    configMemoria.pathSwap = config_get_string_value(config, "PATH_SWAP");
+    configMemoria.tamanioSwap = (uint32_t)config_get_int_value(config, "TAMANIO_SWAP");
+}
+
+void finalizar_memoria(){
+    free(memoriaPrincipal);
+    liberar_espacioKernel();
+    swap_cerrar();
+
+    config_destroy(config);
+    log_destroy(logger);
+    
+    pthread_mutex_destroy(&mx_main);
+    pthread_mutex_destroy(&mx_logger);
+}
+
+/// @brief Libera el espacio de tablas de páginas.
+static void liberar_espacioKernel(){
+    list_destroy_and_destroy_elements(espacioKernel, &pag_destruirTablaPaginas);
+    pthread_mutex_destroy(&mx_espacioKernel);
 }

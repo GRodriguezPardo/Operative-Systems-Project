@@ -24,9 +24,11 @@ typedef enum op_code
     I_O,
     EXIT,
 
-    // COMUNICACION - MEMORIA
-    CPU_ACK,
-    KERNEL_ACK,
+    // MEMORIA
+    INIT_KERNEL,
+    MMU_MARCO,
+    PAGE_FAULT,
+    READY_PROCESO,
 
     // KERNEL - CPU
     INIT_CPU,

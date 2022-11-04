@@ -8,11 +8,15 @@
 #include <string.h>
 
 void esperar_hilos();
-void finalizar_memoria();
 
 void loggear_info(t_log *, char *);
 void loggear_error(t_log *, char *);
 
-//Atiende el handshake del cliente.
-void recibirHandshake(int, op_code);
+void recibir_handshake(int socket, op_code codigo);
+
+void aplicar_retardoMemoria();
+void aplicar_retardoSwap();
+
+uint32_t recibir_uint32t(int socket);
+
 #endif //MEMORIA_UTILS_H_
