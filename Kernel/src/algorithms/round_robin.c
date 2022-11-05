@@ -39,7 +39,6 @@ t_pcb *rr_obtener_siguiente_exec()
     t_pcb* pcb = (t_pcb *)queue_pop(cola_algoritmo_rr);
     pthread_mutex_unlock(&mutex_cola_rr);
 
-    //rr_clock_interrupt(pcb->id);
     uint32_t* id;
     pthread_t thread_id;
     {
