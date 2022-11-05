@@ -14,6 +14,20 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+typedef struct t_auxCiclo{
+    char op[10], 
+    oper1[10], 
+    oper2[10];
+    uint8_t instruction_code;
+    uint32_t register1,register2;
+}t_auxCiclo;
+
+extern bool devolverContexto;
+
+char* fetch();
+void decode(t_log *logger_cpu_ciclo, long retardo_instruccion, char* instruccion, t_auxCiclo* auxCiclo);
+void execute(t_auxCiclo* auxCiclo);
+void check_interrupt();
 void *ciclo_instruccion(void *config);
 
 

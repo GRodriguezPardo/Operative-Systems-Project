@@ -1,133 +1,148 @@
 #include "ciclo.h"
 
+bool devolverContexto;
+
+char* fetch(){
+    return mi_contexto->instrucciones[mi_contexto->program_counter];
+}
+
+void decode(t_log *logger_cpu_ciclo, long retardo_instruccion, char* instruccion, t_auxCiclo* auxCiclo){
+     sscanf(instruccion, "%s %s %s", auxCiclo->op, auxCiclo->oper1, auxCiclo->oper2);
+                pthread_mutex_lock(&mutex_logger);
+                log_info(logger_cpu_ciclo,"la operacion es :%s",auxCiclo->op);
+                pthread_mutex_unlock(&mutex_logger);
+                if(!strcmp(auxCiclo->op,"SET")){
+                    if(!strcmp(auxCiclo->oper1,"AX")){
+                        auxCiclo->register1 = 0;
+                    } else if(!strcmp(auxCiclo->oper1,"BX")){
+                        auxCiclo->register1 = 1;
+                    }else if(!strcmp(auxCiclo->oper1,"CX")){
+                        auxCiclo->register1 = 2;
+                    }else if(!strcmp(auxCiclo->oper1,"DX")){
+                        auxCiclo->register1 = 3;
+                    }        
+                    usleep(retardo_instruccion * 1000);
+                    auxCiclo->instruction_code = 0;
+                }else if(!strcmp(auxCiclo->op,"ADD")){
+                    if(!strcmp(auxCiclo->oper1,"AX")){
+                        auxCiclo->register1 = 0;
+                    } else if(!strcmp(auxCiclo->oper1,"BX")){
+                        auxCiclo->register1 = 1;
+                    }else if(!strcmp(auxCiclo->oper1,"CX")){
+                        auxCiclo->register1 = 2;
+                    }else if(!strcmp(auxCiclo->oper1,"DX")){
+                        auxCiclo->register1 = 3;    
+                    }
+                    if(!strcmp(auxCiclo->oper2,"AX")){
+                        auxCiclo->register2 = 0;
+                    } else if(!strcmp(auxCiclo->oper2,"BX")){
+                        auxCiclo->register2 = 1;
+                    }else if(!strcmp(auxCiclo->oper2,"CX")){
+                        auxCiclo->register2 = 2;
+                    }else if(!strcmp(auxCiclo->oper2,"DX")){
+                        auxCiclo->register2 = 3;
+                    }
+                    usleep(retardo_instruccion * 1000);
+                    auxCiclo->instruction_code = 1;   
+                }else if(!strcmp(auxCiclo->op,"MOV_IN")){
+                    auxCiclo->instruction_code = 2;
+                }else if(!strcmp(auxCiclo->op,"MOV_OUT")){
+                    auxCiclo->instruction_code = 3;
+                }else if(!strcmp(auxCiclo->op,"I/O")){
+                    auxCiclo->instruction_code = 4;
+                }else if(!strcmp(auxCiclo->op,"EXIT")){
+                    auxCiclo->instruction_code = 5;
+                }
+}
+
+void execute(t_auxCiclo* auxCiclo){
+    switch(auxCiclo->instruction_code){
+        case 0://set
+            mi_contexto->registros[auxCiclo->register1] = (uint32_t)atoi(auxCiclo->oper2);
+            break;
+        case 1://add
+            mi_contexto->registros[auxCiclo->register1] += mi_contexto->registros[auxCiclo->register2];
+            break;
+        case 2:
+            break;
+        case 3:
+            break;
+        case 4://I/O
+            mi_contexto->dispositivo = auxCiclo->oper1;
+            if(!strcmp(mi_contexto->dispositivo,"TECLADO") || !strcmp(mi_contexto->dispositivo,"PANTALLA")){
+                if(!strcmp(auxCiclo->oper2,"AX")){
+                    mi_contexto->unidades = 0;
+                } else if(!strcmp(auxCiclo->oper2,"BX")){
+                    mi_contexto->unidades = 1;
+                }else if(!strcmp(auxCiclo->oper2,"CX")){
+                    mi_contexto->unidades = 2;
+                }else if(!strcmp(auxCiclo->oper2,"DX")){
+                    mi_contexto->unidades = 3;
+                }
+            }else{
+                mi_contexto->unidades = (uint32_t)atoi(auxCiclo->oper2);
+            }
+                                    
+            devolverContexto = true;
+            mi_contexto -> pipeline.operacion = BLOQUEO_PROCESO; //pensar prioridades de razones para desalojar
+            break;
+        case 5://EXIT
+            devolverContexto = true;
+            mi_contexto -> pipeline.operacion = EXIT_PROCESO;
+            break;
+        default:
+    }
+}
+
+void check_interrupt(){
+    if(flag_interrupcion == 1){
+        if(pid_interrupt == mi_contexto->id){
+            if(mi_contexto->pipeline.operacion == PROXIMO_PCB){
+                pthread_mutex_lock(&mutex_flag);
+                flag_interrupcion = 0;
+                pthread_mutex_unlock(&mutex_flag);
+                devolverContexto = true;
+                mi_contexto -> pipeline.operacion = DESALOJO_PROCESO;
+            }
+        }
+    }
+}
+
 void* ciclo_instruccion(void* config){
     
     t_log *logger_cpu_ciclo = log_create("../cpu.log", "CPU - Ciclo_instruccion", 0, LOG_LEVEL_INFO);
     long retardo_instruccion = config_get_long_value((t_config*) config,"RETARDO_INSTRUCCION");
-    char op[10], 
-    oper1[10], 
-    oper2[10];
+
     char* instruccion;
-    uint8_t instruction_code;
-    uint8_t register1,register2;
-    bool devolverContexto;
-    ////////////// FETCH //////////////
+    t_auxCiclo* auxCiclo = (t_auxCiclo*)malloc(sizeof(t_auxCiclo));
+
     sem_wait(&sem_ciclo_instruccion);
-    pthread_mutex_lock(&mutex_logger);
-    log_info(logger_cpu_ciclo,"%s",mi_contexto->instrucciones[mi_contexto->program_counter]);
-    pthread_mutex_unlock(&mutex_logger);
+   
     while(1){
+        pthread_mutex_lock(&mutex_logger);
+        log_info(logger_cpu_ciclo,"%s",mi_contexto->instrucciones[mi_contexto->program_counter]);
+        pthread_mutex_unlock(&mutex_logger);
+        ////////////// FETCH //////////////
             {
-            instruccion = mi_contexto->instrucciones[mi_contexto->program_counter];
+                instruccion = fetch();
             }
         ////////////// DECODE //////////////
-            pthread_mutex_lock(&mutex_logger);
-            log_info(logger_cpu_ciclo,"%s",instruccion);
-            pthread_mutex_unlock(&mutex_logger);
             {
-                sscanf(instruccion, "%s %s %s", op, oper1, oper2);
-                pthread_mutex_lock(&mutex_logger);
-                log_info(logger_cpu_ciclo,"la operacion es :%s",op);
-                pthread_mutex_unlock(&mutex_logger);
-                if(!strcmp(op,"SET")){
-                    if(!strcmp(oper1,"AX")){
-                        register1 = 0;
-                    } else if(!strcmp(oper1,"BX")){
-                        register1 = 1;
-                    }else if(!strcmp(oper1,"CX")){
-                        register1 = 2;
-                    }else if(!strcmp(oper1,"DX")){
-                        register1 = 3;
-                    }        
-                    usleep(retardo_instruccion * 1000);
-                    instruction_code = 0;
-                }else if(!strcmp(op,"ADD")){
-                    if(!strcmp(oper1,"AX")){
-                        register1 = 0;
-                    } else if(!strcmp(oper1,"BX")){
-                        register1 = 1;
-                    }else if(!strcmp(oper1,"CX")){
-                        register1 = 2;
-                    }else if(!strcmp(oper1,"DX")){
-                        register1 = 3;    
-                    }
-                    if(!strcmp(oper2,"AX")){
-                        register2 = 0;
-                    } else if(!strcmp(oper2,"BX")){
-                        register2 = 1;
-                    }else if(!strcmp(oper2,"CX")){
-                        register2 = 2;
-                    }else if(!strcmp(oper2,"DX")){
-                        register2 = 3;
-                    }
-                    usleep(retardo_instruccion * 1000);
-                    instruction_code = 1;   
-                }else if(!strcmp(op,"MOV_IN")){
-                    instruction_code = 2;
-                }else if(!strcmp(op,"MOV_OUT")){
-                    instruction_code = 3;
-                }else if(!strcmp(op,"I/O")){
-                    instruction_code = 4;
-                }else if(!strcmp(op,"EXIT")){
-                    instruction_code = 5;
-                }
+               decode(logger_cpu_ciclo,retardo_instruccion,instruccion,auxCiclo);
             }
-            ////////////// EXECUTE //////////////
+        ////////////// EXECUTE //////////////
             {
-                switch(instruction_code){
-                    case 0://set
-                        mi_contexto->registros[register1] = (uint32_t)atoi(oper2);
-                        break;
-                    case 1://add
-                        mi_contexto->registros[register1] += mi_contexto->registros[register2];
-                        break;
-                    case 2:
-                        break;
-                    case 3:
-                        break;
-                    case 4://I/O
-                        mi_contexto->dispositivo = oper1;
-                        if(!strcmp(mi_contexto->dispositivo,"TECLADO") || !strcmp(mi_contexto->dispositivo,"PANTALLA")){
-                            if(!strcmp(oper2,"AX")){
-                                mi_contexto->unidades = 0;
-                            } else if(!strcmp(oper2,"BX")){
-                                mi_contexto->unidades = 1;
-                            }else if(!strcmp(oper2,"CX")){
-                                mi_contexto->unidades = 2;
-                            }else if(!strcmp(oper2,"DX")){
-                                mi_contexto->unidades = 3;
-                            }
-                        }else{
-                            mi_contexto->unidades = (uint32_t)atoi(oper2);
-                        }
-                                                
-                        devolverContexto = true;
-                        mi_contexto -> pipeline.operacion = BLOQUEO_PROCESO; //pensar prioridades de razones para desalojar
-                        break;
-                    case 5://EXIT
-                        devolverContexto = true;
-                        mi_contexto -> pipeline.operacion = EXIT_PROCESO;
-                        break;
-                    default:
-                }
+                execute(auxCiclo);
             }
         mi_contexto->program_counter++;
+
         pthread_mutex_lock(&mutex_logger);
-        log_info(logger_cpu_ciclo,"PID:%d - Ejecutando: %s - %s - %s",mi_contexto->id,op,oper1,oper2);
+        log_info(logger_cpu_ciclo,"PID:%d - Ejecutando: %s - %s - %s",mi_contexto->id,auxCiclo->op,auxCiclo->oper1,auxCiclo->oper2);
         pthread_mutex_unlock(&mutex_logger);
+
         ////////////// CHECK INTERRUPT //////////////
         {
-            if(flag_interrupcion == 1){
-                if(pid_interrupt == mi_contexto->id){
-                    if(mi_contexto->pipeline.operacion == PROXIMO_PCB){
-                        pthread_mutex_lock(&mutex_flag);
-                        flag_interrupcion = 0;
-                        pthread_mutex_unlock(&mutex_flag);
-                        devolverContexto = true;
-                        mi_contexto -> pipeline.operacion = DESALOJO_PROCESO;
-                    }
-                }
-            }
+            check_interrupt();
         }
         if(devolverContexto){
             devolverContexto = false;
