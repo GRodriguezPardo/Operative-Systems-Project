@@ -14,6 +14,7 @@ t_log* logger_largo_plazo;
 
 uint8_t *console_status;
 int *console_acumulator;
+uint32_t QUANTUM;
 
 uint32_t global_pid_to_interrupt;
 

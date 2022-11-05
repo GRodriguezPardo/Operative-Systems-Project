@@ -15,6 +15,7 @@ extern t_log* logger_largo_plazo;
 ////////////// ESTADO DEL KERNEL //////////////
 extern uint8_t *console_status;
 extern int *console_acumulator;
+extern uint32_t QUANTUM;
 
 ////////////// ESTADO DE INTERRUPT ROUTINE //////////////
 extern uint32_t global_pid_to_interrupt;

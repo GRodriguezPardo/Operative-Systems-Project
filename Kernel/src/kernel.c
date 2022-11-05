@@ -27,6 +27,7 @@ int main(int argc, char** argv)
 
     ////////////// INICIANDO VARIABLES GLOBALES //////////////
     int grado_multiprogramacion = config_get_int_value(config, "GRADO_MAX_MULTIPROGRAMACION");
+    QUANTUM = (uint32_t) config_get_int_value(config, "QUANTUM_RR");
     init_globals_kernel(grado_multiprogramacion);
 
     ////////////// INICIANDO DISPOTIVOS I/O //////////////

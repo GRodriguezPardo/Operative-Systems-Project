@@ -10,7 +10,6 @@
 
 t_queue *cola_algoritmo_rr;
 pthread_mutex_t mutex_cola_rr;
-unsigned int QUANTUM; 
 
 void* rr_clock_interrupt(void* param);
 
@@ -18,7 +17,6 @@ void rr_init_algoritmo()
 {
     cola_algoritmo_rr = queue_create();
     pthread_mutex_init(&mutex_cola_rr, NULL);
-    QUANTUM = 1500; /// TODO: Reemplazar por valor de config;
 }
 
 void rr_final_algoritmo()

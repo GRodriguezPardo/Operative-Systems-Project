@@ -13,14 +13,12 @@ void* feedback_clock_interrupt(void* param);
 t_queue *cola_algoritmo_feedback_rr;
 t_queue *cola_algoritmo_feedback_fifo;
 pthread_mutex_t mutex_cola_feedback;
-unsigned int FEEDBACK_QUANTUM;
 
 void feedback_init_algoritmo()
 {
     cola_algoritmo_feedback_rr = queue_create();
     cola_algoritmo_feedback_fifo = queue_create();
     pthread_mutex_init(&mutex_cola_feedback, NULL);
-    FEEDBACK_QUANTUM = 1500; /// TODO: Reemplazar por valor de config;
 }
 
 void feedback_final_algoritmo()
@@ -84,7 +82,7 @@ void *feedback_clock_interrupt(void *param)
 {
     uint32_t pid = *((uint32_t *)param);
 
-    usleep(FEEDBACK_QUANTUM * 1000); 
+    usleep(QUANTUM * 1000); 
 
     sem_wait(&sem_interrupt_algorithms);
     global_pid_to_interrupt = pid;
