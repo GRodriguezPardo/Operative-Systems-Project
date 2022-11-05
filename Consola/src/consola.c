@@ -58,7 +58,8 @@ int main(int argc, char **argv)
     ////////////// ESPERA DE I/O //////////////
     op_code codigo_operacion;
     int __attribute__((unused)) tamaño_paquete;
-    char *input = NULL, *output = NULL;
+    char *auxInput = NULL;
+    uint32_t *input = (uint32_t*)malloc(sizeof(uint32_t)), *output = NULL;
     t_paquete *paquete = NULL;
 
     codigo_operacion = recibir_operacion(socket);
@@ -69,21 +70,21 @@ int main(int argc, char **argv)
         switch (codigo_operacion)
         {
         case CONSOLE_INPUT:
-            input = readline("> ");
+            auxInput = readline("> ");
+            *input = atoi(auxInput);
 
             paquete = crear_paquete(CONSOLE_INPUT_RESPUESTA);
-            agregar_a_paquete(paquete, (void *)input, strlen(input) + 1);
+            agregar_a_paquete(paquete, (void *)input, sizeof(uint32_t));
             enviar_paquete(paquete, socket);
             eliminar_paquete(paquete);
             paquete = NULL;
 
-            free(input);
-            input = NULL;
-
+            free(auxInput);
+            auxInput = NULL;
             break;
         case CONSOLE_OUTPUT:
-            output = (char *)recibir(socket);
-            printf("%s\n", output);
+            output = (uint32_t*)recibir(socket);
+            printf("%u\n", *output);
             free(output);
             output = NULL;
 
