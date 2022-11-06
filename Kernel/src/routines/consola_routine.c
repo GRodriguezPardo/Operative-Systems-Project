@@ -1,5 +1,6 @@
-#include <commons/log.h>
 #include <commons/config.h>
+#include <commons/log.h>
+#include <commons/string.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,9 +25,9 @@ void *consola_routine(void *param)
     ////////////// CREANDO LOGGER DEL HANDLER //////////////
     t_log *logger;
     {
-        char buffer[25];
-        sprintf(buffer, "Kernel - Console %d", consola_id);
+        char *buffer = string_from_format("Kernel - Console %d", consola_id);
         logger = log_create("../kernel.log", buffer, 0, LOG_LEVEL_INFO);
+        free(buffer);
     }
 
     ////////////// RECIBIENDO OPERACION //////////////
@@ -59,7 +60,7 @@ void *consola_routine(void *param)
     }
 
     ////////////// RECIBIENDO INSTRUCCIONES //////////////
-    char **instrucciones;
+    char **instrucciones = (char **)malloc(0);
     uint32_t cantidad = 0;
     {
         void *msg = NULL;
@@ -133,7 +134,7 @@ void *consola_routine(void *param)
                 free(input);
                 input = NULL;
 
-                sem_post(&(mi_pcb -> console_waiter_semaphore));
+                sem_post(&(mi_pcb->console_waiter_semaphore));
                 break;
 
             case CONSOLE_OUTPUT:
@@ -153,15 +154,15 @@ void *consola_routine(void *param)
                 tamanio_paquete = largo_paquete(socket_cliente);
 
                 mi_pcb->pipeline.operacion = CONSOLE_OUTPUT_RESPUESTA;
-                sem_post(&(mi_pcb -> console_waiter_semaphore));
+                sem_post(&(mi_pcb->console_waiter_semaphore));
                 break;
             case EXIT:
                 logger_monitor_info(logger, "Finalizando.");
                 pthread_mutex_lock(&mutex_pcb_list);
                 {
-                    search_for_id_buffer = mi_pcb ->id;
+                    search_for_id_buffer = mi_pcb->id;
                     list_remove_by_condition(pcb_list, search_for_id);
-                    pcb_element_destroyer((void*) mi_pcb);
+                    pcb_element_destroyer((void *)mi_pcb);
                 }
                 pthread_mutex_unlock(&mutex_pcb_list);
 
@@ -169,6 +170,7 @@ void *consola_routine(void *param)
                 enviar_paquete(paquete, socket_cliente);
                 eliminar_paquete(paquete);
                 
+                log_destroy(logger);
                 return NULL;
             default:
                 perror("Error: Fallo al recibir operacion de IO.\n");
@@ -178,5 +180,6 @@ void *consola_routine(void *param)
             }
         }
     }
+    
     return NULL;
 }

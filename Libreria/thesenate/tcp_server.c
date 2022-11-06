@@ -1,7 +1,7 @@
 #include <stdio.h>
-#include <string.h> //strlen
+#include <string.h>
 #include <stdint.h>
-#include <stdlib.h> //strlen
+#include <stdlib.h>
 #include <sys/socket.h>
 #include <arpa/inet.h> //inet_addr
 #include <unistd.h>    //write
@@ -17,7 +17,18 @@ int iniciar_servidor(char *ip, char *puerto, void *(*start_routine)(void *))
     socket_servidor = socket(AF_INET, SOCK_STREAM, 0);
     if (socket_servidor == -1)
     {
-        printf("Could not create socket\n");
+        perror("Could not create socket\n");
+        exit(EXIT_FAILURE);
+    }
+    if (setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) < 0)
+    {
+        perror("setsockopt(SO_REUSEADDR) failed");
+        exit(EXIT_FAILURE);
+    }
+    if (setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEPORT, &(int){1}, sizeof(int)) < 0)
+    {
+        perror("setsockopt(SO_REUSEPORT) failed");
+        exit(EXIT_FAILURE);
     }
     puts("Socket created\n");
 
@@ -31,7 +42,7 @@ int iniciar_servidor(char *ip, char *puerto, void *(*start_routine)(void *))
     {
         // print the error message
         perror("Bind failed. Error.");
-        return 1;
+        exit(EXIT_FAILURE);
     }
     puts("Bind done");
 
@@ -51,13 +62,13 @@ int iniciar_servidor(char *ip, char *puerto, void *(*start_routine)(void *))
         if (client_sock < 0)
         {
             perror("Accept failed\n");
-            return 1;
+            exit(EXIT_FAILURE);
         }
 
         if (pthread_create(&thread_id, NULL, start_routine, (void *)&client_sock) < 0)
         {
             perror("Could not create thread\n");
-            return 1;
+            exit(EXIT_FAILURE);
         }
 
         // Now join the thread , so that we dont terminate before the thread
@@ -79,7 +90,18 @@ int iniciar_servidor_consolas(char *ip, char *puerto, void *(*start_routine)(voi
     socket_servidor = socket(AF_INET, SOCK_STREAM, 0);
     if (socket_servidor == -1)
     {
-        printf("Could not create socket\n");
+        perror("Could not create socket\n");
+        exit(EXIT_FAILURE);
+    }
+    if (setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) < 0)
+    {
+        perror("setsockopt(SO_REUSEADDR) failed");
+        exit(EXIT_FAILURE);
+    }
+    if (setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEPORT, &(int){1}, sizeof(int)) < 0)
+    {
+        perror("setsockopt(SO_REUSEPORT) failed");
+        exit(EXIT_FAILURE);
     }
     puts("Socket created\n");
 
@@ -93,7 +115,7 @@ int iniciar_servidor_consolas(char *ip, char *puerto, void *(*start_routine)(voi
     {
         // print the error message
         perror("Bind failed. Error.");
-        return 1;
+        exit(EXIT_FAILURE);
     }
     puts("Bind done");
 
@@ -115,7 +137,7 @@ int iniciar_servidor_consolas(char *ip, char *puerto, void *(*start_routine)(voi
         if (client_sock < 0)
         {
             perror("Accept failed\n");
-            return 1;
+            exit(EXIT_FAILURE);
         }
 
         aux[0] = client_sock;
@@ -129,7 +151,7 @@ int iniciar_servidor_consolas(char *ip, char *puerto, void *(*start_routine)(voi
         if (pthread_create(&thread_id, NULL, start_routine, param) < 0)
         {
             perror("Could not create thread\n");
-            return 1;
+            exit(EXIT_FAILURE);
         }
 
         // Now join the thread , so that we dont terminate before the thread

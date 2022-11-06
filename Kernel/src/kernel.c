@@ -44,7 +44,7 @@ int main(int argc, char** argv)
         );
         
         tiempos_IO = (uint32_t*)malloc(sizeof(uint32_t)*cantidad_dispositivos_IO);
-        sem_dispositivos_IO = (sem_t*)malloc(sizeof(sem_t)*cantidad_dispositivos_IO + 2);
+        sem_dispositivos_IO = (sem_t*)malloc(sizeof(sem_t)*(cantidad_dispositivos_IO + 2));
         sem_init(&(sem_dispositivos_IO[0]),0,1);
         sem_init(&(sem_dispositivos_IO[1]),0,1);
 
@@ -83,12 +83,11 @@ int main(int argc, char** argv)
     }
 
     logger_monitor_info(logger, "Conectando a CPU-Interrupt.");
-   /* if (pthread_create(&cpu_interrupt, NULL, cpu_interrupt_routine, (void *) config) < 0)
+    if (pthread_create(&cpu_interrupt, NULL, cpu_interrupt_routine, (void *) config) < 0)
     {
         perror("Error: CPU-Interrupt thread failed.\n");
         logger_monitor_error(logger, "Error: CPU-Interrupt thread failed.");
     }
-    */
 
     logger_monitor_info(logger, "Iniciando planificador de largo plazo.");
     if (pthread_create(&planificador_largo, NULL, new_a_ready, NULL) < 0)

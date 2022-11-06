@@ -1,3 +1,4 @@
+#include <commons/string.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,12 +9,12 @@
 void ingresar_a_new(t_pcb *nuevo_pcb)
 {
     pthread_mutex_lock(&mutex_cola_new);
-    queue_push(cola_estado_new, (void*) nuevo_pcb);
+    queue_push(cola_estado_new, (void *)nuevo_pcb);
     pthread_mutex_unlock(&mutex_cola_new);
 
-    char msg[40];
-    sprintf(msg, "Se agrega el proceso %d a new.", (int) (nuevo_pcb->id));
-    //logger_monitor_info(logger_largo_plazo, msg);
+    char *msg = string_from_format("Se agrega el proceso %d a new.", (int)(nuevo_pcb->id));
+    logger_monitor_info(logger_largo_plazo, msg);
+    free(msg);
 
     sem_post(&sem_proceso_entro_a_new);
 }
@@ -21,12 +22,12 @@ void ingresar_a_new(t_pcb *nuevo_pcb)
 t_pcb *obtener_siguiente_en_new()
 {
     pthread_mutex_lock(&mutex_cola_new);
-    t_pcb* proximo_pcb = (t_pcb*)queue_pop(cola_estado_new);
+    t_pcb *proximo_pcb = (t_pcb *)queue_pop(cola_estado_new);
     pthread_mutex_unlock(&mutex_cola_new);
     return proximo_pcb;
 }
 
-void *new_a_ready(void* arg)
+void *new_a_ready(void *arg)
 {
     while (1)
     {
@@ -34,16 +35,16 @@ void *new_a_ready(void* arg)
 
         sem_wait(&sem_grado_multiprogramacion);
 
-        t_pcb* pcb = obtener_siguiente_en_new();
+        t_pcb *pcb = obtener_siguiente_en_new();
         ingresar_a_ready(pcb, NUEVO_PROCESO);
 
         pthread_mutex_lock(&mutex_pcb_list);
         list_add(pcb_list, pcb);
         pthread_mutex_unlock(&mutex_pcb_list);
 
-        char msg[40];
-        sprintf(msg, "Se agrega el proceso %d a ready.", (int) (pcb->id));
-        //logger_monitor_info(logger_largo_plazo, msg);
+        char *msg = string_from_format("Se agrega el proceso %d a ready.", (int)(pcb->id));
+        logger_monitor_info(logger_largo_plazo, msg);
+        free(msg);
 
         sem_post(&sem_proceso_entro_a_ready);
     }
