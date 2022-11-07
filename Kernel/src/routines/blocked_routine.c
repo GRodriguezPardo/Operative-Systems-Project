@@ -15,7 +15,7 @@ void bloquear_proceso(t_pcb* unPcb, char* dispositivo, uint32_t unidades)
     void* param = malloc(sizeof(t_pcb*) + sizeof(uint32_t) + strlen(dispositivo) + 1);
 
     *((t_pcb**) param) = unPcb;
-    *((uint32_t*) param + sizeof(t_pcb*)) = unidades;
+    *((uint32_t*) (param + sizeof(t_pcb*))) = unidades;
     memcpy(param + sizeof(t_pcb*) + sizeof(uint32_t), dispositivo, strlen(dispositivo) + 1);
 
     pthread_t thread_id;
@@ -27,7 +27,7 @@ void bloquear_proceso(t_pcb* unPcb, char* dispositivo, uint32_t unidades)
 void* blocked_process_routine(void* param)
 {
     t_pcb* unPcb = *((t_pcb**) param);
-    uint32_t unidades = *((uint32_t*) param + sizeof(t_pcb*));
+    uint32_t unidades = *((uint32_t*) (param + sizeof(t_pcb*)));
     char* dispositivo = param + sizeof(t_pcb*) + sizeof(uint32_t);
 
     if(!strcmp(dispositivo, "PANTALLA"))
@@ -69,7 +69,7 @@ void* blocked_process_routine(void* param)
                 exit(EXIT_FAILURE);
             }
 
-            unPcb -> pipeline.valor = (unPcb -> registros)[unidades];
+            (unPcb -> registros)[unidades] = unPcb -> pipeline.valor;
         }
         sem_post(&(sem_dispositivos_IO[1]));
     } else {

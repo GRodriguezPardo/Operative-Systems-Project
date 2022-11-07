@@ -35,14 +35,17 @@ void *interrupt_routine(void* socket){
         switch(codigo_operacion) {
             case DESALOJO_PROCESO:
                 msg = recibir(socket_cliente);
+                
                 pthread_mutex_lock(&mutex_logger);
                 log_info(logger,"Recibi el mensaje: %d\nEn el socket: %d\n", *(int*) msg, socket_cliente);
                 pthread_mutex_unlock(&mutex_logger);
-                pid_interrupt = *((uint32_t*)msg);
-                free(msg);
+                
                 pthread_mutex_lock(&mutex_flag);
+                pid_interrupt = *((uint32_t*)msg);
                 flag_interrupcion = 1;
                 pthread_mutex_unlock(&mutex_flag);
+
+                free(msg);
                 break;
             default:
                 pthread_mutex_lock(&mutex_logger);

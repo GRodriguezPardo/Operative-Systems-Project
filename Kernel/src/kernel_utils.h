@@ -20,4 +20,6 @@ bool configurar_algoritmo(char* algortimo);
 extern uint32_t search_for_id_buffer;
 bool search_for_id(void *param);
 
+char* queue_listar_elementos(t_queue* cola);
+
 #endif /* KERNEL_UTILS_H_ */

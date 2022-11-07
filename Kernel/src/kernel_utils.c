@@ -1,5 +1,8 @@
 #include <commons/config.h>
+#include <commons/collections/list.h>
+#include <commons/collections/queue.h>
 #include <commons/log.h>
+#include <commons/string.h>
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -121,4 +124,18 @@ uint32_t search_for_id_buffer;
 bool search_for_id(void *param)
 {
     return ((t_pcb *)param)->id == search_for_id_buffer;
+}
+
+char* queue_listar_elementos(t_queue* cola)
+{
+    char* msg = string_from_format("[ ");
+    t_list_iterator* iterador = list_iterator_create(cola->elements);
+    for(
+        ;
+        list_iterator_has_next(iterador);
+        string_append_with_format(&msg, "%lu ", (unsigned long)((t_pcb*) list_iterator_next(iterador)) -> id)
+    );
+    list_iterator_destroy(iterador);
+    string_append(&msg, "]");
+    return msg;
 }

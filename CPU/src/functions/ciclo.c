@@ -95,17 +95,21 @@ void execute(t_auxCiclo* auxCiclo){
 }
 
 void check_interrupt(){
+    pthread_mutex_lock(&mutex_flag);
     if(flag_interrupcion == 1){
         if(pid_interrupt == mi_contexto->id){
             if(mi_contexto->pipeline.operacion == PROXIMO_PCB){
-                pthread_mutex_lock(&mutex_flag);
+                
                 flag_interrupcion = 0;
-                pthread_mutex_unlock(&mutex_flag);
+                
                 devolverContexto = true;
                 mi_contexto -> pipeline.operacion = DESALOJO_PROCESO;
             }
+        }else{
+            flag_interrupcion = 0;
         }
     }
+    pthread_mutex_unlock(&mutex_flag);
 }
 
 void* ciclo_instruccion(void* config){

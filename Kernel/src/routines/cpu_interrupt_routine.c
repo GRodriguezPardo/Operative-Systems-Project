@@ -10,6 +10,7 @@
 #include <thesenate/tcp_serializacion.h>
 #include "cpu_interrupt_routine.h"
 #include "../globals.h"
+#include "../kernel_utils.h"
 
 void *cpu_interrupt_routine(void *config)
 {

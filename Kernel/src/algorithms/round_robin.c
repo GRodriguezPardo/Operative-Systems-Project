@@ -1,4 +1,7 @@
+#include <commons/collections/list.h>
 #include <commons/collections/queue.h>
+#include <commons/log.h>
+#include <commons/string.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdio.h>
@@ -7,9 +10,11 @@
 #include <unistd.h>
 #include "round_robin.h"
 #include "../globals.h"
+#include "../kernel_utils.h"
 
 t_queue *cola_algoritmo_rr;
 pthread_mutex_t mutex_cola_rr;
+t_log *logger_rr;
 
 void* rr_clock_interrupt(void* param);
 
@@ -17,6 +22,7 @@ void rr_init_algoritmo()
 {
     cola_algoritmo_rr = queue_create();
     pthread_mutex_init(&mutex_cola_rr, NULL);
+    logger_rr = log_create("../kernel.log", "Kernel - Algoritmo RR", 0, LOG_LEVEL_INFO);
 }
 
 void rr_final_algoritmo()
@@ -24,12 +30,17 @@ void rr_final_algoritmo()
     pthread_mutex_lock(&mutex_cola_rr);
     queue_destroy(cola_algoritmo_rr);
     pthread_mutex_unlock(&mutex_cola_rr);
+    pthread_mutex_destroy(&mutex_cola_rr);
+    log_destroy(logger_rr);
 }
 
 void rr_ingresar_a_ready(t_pcb *pcb, op_code __attribute__((unused)) source)
 {
     pthread_mutex_lock(&mutex_cola_rr);
     queue_push(cola_algoritmo_rr, (void *)pcb);
+    char* lista = queue_listar_elementos(cola_algoritmo_rr);
+    logger_monitor_info(logger_rr, lista);
+    free(lista);
     pthread_mutex_unlock(&mutex_cola_rr);
 }
 
