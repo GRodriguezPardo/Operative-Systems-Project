@@ -97,7 +97,7 @@ void *consola_routine(void *param)
     }
 
     ////////////// ENTRANDO EN COLA DEL PLANIFICADOR DE LARGO PLAZO //////////////
-    logger_monitor_info(logger, "Ingresando PCB a NEW.");
+    logger_monitor_info(logger, "Esperando grado de multiprogramacion.");
     ingresar_a_new(mi_pcb);
 
     ////////////// QUEDANDO A LA ESPERA DE INSTRUCCIONES //////////////

@@ -41,7 +41,6 @@ void *cpu_dispatch_routine(void *config)
         switch (codigo_operacion)
         {
         case INIT_CPU:
-            logger_monitor_info(logger_dispatch, "Inicializando CPU");
             give_cpu_next_pcb(socket);
             break;
         case DESALOJO_PROCESO:
@@ -49,7 +48,7 @@ void *cpu_dispatch_routine(void *config)
 
             {   ////////////// LOGGEANDO //////////////
                 pthread_mutex_lock(&mutex_logger);
-                log_info(logger_dispatch, "El proceso %lu salio de ejecucion por DESALOJO", (unsigned long)(unPcb->id));
+                log_info(logger_dispatch, "Proceso %lu : EXEC -> READY (DESALOJO)", (unsigned long)(unPcb->id));
                 pthread_mutex_unlock(&mutex_logger);
             }
 
@@ -65,7 +64,7 @@ void *cpu_dispatch_routine(void *config)
 
             {   ////////////// LOGGEANDO //////////////
                 pthread_mutex_lock(&mutex_logger);
-                log_info(logger_dispatch, "El proceso %lu salio de ejecucion por EXIT", (unsigned long)(unPcb->id));
+                log_info(logger_dispatch, "Proceso %lu : EXEC -> EXIT (EXIT)", (unsigned long)(unPcb->id));
                 pthread_mutex_unlock(&mutex_logger);
             }
 
@@ -80,7 +79,7 @@ void *cpu_dispatch_routine(void *config)
 
             {   ////////////// LOGGEANDO //////////////
                 pthread_mutex_lock(&mutex_logger);
-                log_info(logger_dispatch, "El proceso %lu salio de ejecucion por BLOQUEO", (unsigned long)(unPcb->id));
+                log_info(logger_dispatch, "Proceso %lu : EXEC -> BLOCKED (BLOQUEO)", (unsigned long)(unPcb->id));
                 pthread_mutex_unlock(&mutex_logger);
             }
 
@@ -91,10 +90,6 @@ void *cpu_dispatch_routine(void *config)
                 unidades = (uint32_t*)recibir(socket);
 
                 bloquear_proceso(unPcb, dispositivo, *unidades);
-
-                pthread_mutex_lock(&mutex_logger);
-                log_info(logger_dispatch, "Bloqueo proceso %u - %s - %u", unPcb->id, dispositivo, *unidades);
-                pthread_mutex_unlock(&mutex_logger);
 
                 free(dispositivo);
                 free(unidades);
@@ -143,7 +138,7 @@ void give_cpu_next_pcb(int socket)
 
     {   ////////////// LOGGEANDO //////////////
         pthread_mutex_lock(&mutex_logger);
-        log_info(logger_dispatch, "Enviando al proceso %lu a ejecutar", (unsigned long)(unPcb->id));
+        log_info(logger_dispatch, "Proceso %lu : READY -> EXEC", (unsigned long)(unPcb->id));
         pthread_mutex_unlock(&mutex_logger);
     }
 }
@@ -202,12 +197,6 @@ t_pcb *obtener_y_actualizar_pcb_recibido(int socket)
 
 void finalizar_proceso(t_pcb* unPcb)
 {
-    {   ////////////// LOGGEANDO //////////////
-        pthread_mutex_lock(&mutex_logger);
-        log_info(logger_dispatch, "El proceso %lu ha llegado a exit", (unsigned long)(unPcb->id));
-        pthread_mutex_unlock(&mutex_logger);
-    }
-    
     unPcb -> pipeline.operacion=EXIT;
     unPcb -> pipeline.valor=0;
     sem_post(&(unPcb -> console_semaphore));

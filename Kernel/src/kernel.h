@@ -17,6 +17,7 @@ int *console_acumulator;
 uint32_t QUANTUM;
 
 uint32_t global_pid_to_interrupt;
+t_log* logger_blockeos;
 
 char** dispositivos_IO;
 uint32_t* tiempos_IO;

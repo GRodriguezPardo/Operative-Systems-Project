@@ -6,6 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "blocked_routine.h"
+#include "../globals.h"
 
 void* blocked_process_routine(void* param);
 
@@ -37,6 +38,11 @@ void* blocked_process_routine(void* param)
             unPcb -> pipeline.valor = (unPcb -> registros)[unidades];
 
             sem_post(&(unPcb -> console_semaphore));
+            {
+                pthread_mutex_lock(&mutex_logger);
+                log_info(logger_blockeos, "Proceso %lu : Usando %s - Registro %lu", (unsigned long) (unPcb -> id), dispositivo, (unsigned long) unidades);
+                pthread_mutex_unlock(&mutex_logger);
+            }
             sem_wait(&(unPcb -> console_waiter_semaphore));
 
             if(unPcb -> pipeline.operacion != CONSOLE_OUTPUT_RESPUESTA){
@@ -51,6 +57,11 @@ void* blocked_process_routine(void* param)
             unPcb -> pipeline.operacion = CONSOLE_INPUT;
 
             sem_post(&(unPcb -> console_semaphore));
+            {
+                pthread_mutex_lock(&mutex_logger);
+                log_info(logger_blockeos, "Proceso %lu : Usando %s - Registro %lu", (unsigned long) (unPcb -> id), dispositivo, (unsigned long) unidades);
+                pthread_mutex_unlock(&mutex_logger);
+            }
             sem_wait(&(unPcb -> console_waiter_semaphore));
 
             if(unPcb -> pipeline.operacion != CONSOLE_INPUT_RESPUESTA){
@@ -80,6 +91,11 @@ void* blocked_process_routine(void* param)
         }
         
         sem_wait(sem_dispositivo);
+        {
+            pthread_mutex_lock(&mutex_logger);
+            log_info(logger_blockeos, "Proceso %lu : Usando %s por %lu unidades", (unsigned long) (unPcb -> id), dispositivo, (unsigned long) unidades);
+            pthread_mutex_unlock(&mutex_logger);
+        }
         usleep(tiempos_IO[num_dispositivo] * unidades * 1000);
         sem_post(sem_dispositivo);
     }

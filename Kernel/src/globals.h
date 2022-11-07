@@ -19,6 +19,7 @@ extern uint32_t QUANTUM;
 
 ////////////// ESTADO DE INTERRUPT ROUTINE //////////////
 extern uint32_t global_pid_to_interrupt;
+extern t_log* logger_blockeos;
 
 ////////////// ESTADO DE IO //////////////
 extern char** dispositivos_IO;

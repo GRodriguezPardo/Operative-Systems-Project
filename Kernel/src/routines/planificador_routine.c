@@ -12,7 +12,7 @@ void ingresar_a_new(t_pcb *nuevo_pcb)
     queue_push(cola_estado_new, (void *)nuevo_pcb);
     pthread_mutex_unlock(&mutex_cola_new);
 
-    char *msg = string_from_format("Se agrega el proceso %d a new.", (int)(nuevo_pcb->id));
+    char *msg = string_from_format("Proceso %lu : -> NEW (Creacion)", (unsigned long)(nuevo_pcb->id));
     logger_monitor_info(logger_largo_plazo, msg);
     free(msg);
 
@@ -42,7 +42,9 @@ void *new_a_ready(void *arg)
         list_add(pcb_list, pcb);
         pthread_mutex_unlock(&mutex_pcb_list);
 
-        char *msg = string_from_format("Se agrega el proceso %d a ready.", (int)(pcb->id));
+        int val = 0;
+        sem_getvalue(&sem_grado_multiprogramacion, &val);
+        char *msg = string_from_format("Proceso %lu : NEW -> READY (Multiprogramacion %d)", (unsigned long)(pcb->id), val);
         logger_monitor_info(logger_largo_plazo, msg);
         free(msg);
 

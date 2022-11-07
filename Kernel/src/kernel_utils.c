@@ -14,6 +14,7 @@
 void init_globals_kernel(int grado_multiprogramacion)
 {
     logger_largo_plazo = log_create("../kernel.log", "Kernel - Planif. Largo Plazo", 0, LOG_LEVEL_INFO);
+    logger_blockeos = log_create("../kernel.log", "Kernel - Admin. Blockeos", 0, LOG_LEVEL_INFO);
 
     sem_init(&sem_grado_multiprogramacion, 0, grado_multiprogramacion);
     sem_init(&sem_proceso_entro_a_new, 0, 0);
@@ -33,8 +34,6 @@ void finalizar_kernel(t_config *config, t_log *logger)
 {
     finalizar_algoritmo();
 
-    log_destroy(logger_largo_plazo);
-
     sem_close(&sem_grado_multiprogramacion);
     sem_destroy(&sem_grado_multiprogramacion);
     sem_close(&sem_proceso_entro_a_new);
@@ -46,8 +45,10 @@ void finalizar_kernel(t_config *config, t_log *logger)
     list_destroy_and_destroy_elements(pcb_list, pcb_element_destroyer);
     queue_destroy_and_destroy_elements(cola_estado_new, pcb_element_destroyer);
 
-    log_info(logger, "Finalizando programa.");
+    log_info(logger, "Apagando Kernel");
     log_destroy(logger);
+    log_destroy(logger_largo_plazo);
+    log_destroy(logger_blockeos);
     config_destroy(config);
 }
 

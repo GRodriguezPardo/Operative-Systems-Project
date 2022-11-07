@@ -1,5 +1,6 @@
-#include <commons/log.h>
 #include <commons/config.h>
+#include <commons/log.h>
+#include <commons/string.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdio.h>
@@ -19,8 +20,14 @@ void *cpu_interrupt_routine(void *config)
         socket = crear_conexion(ipCPU,puertoServidor);
     }
     
+    t_log* logger_interrupt;
+    {
+        logger_interrupt= log_create("../kernel.log", "Kernel - Interrupt", false, LOG_LEVEL_INFO);
+    }
+
     t_paquete *paquete;
     uint32_t local_pid_to_interrupt;
+    char* msg = NULL;
     
     while(1)
     {
@@ -34,13 +41,14 @@ void *cpu_interrupt_routine(void *config)
         agregar_a_paquete(paquete, (void *) &local_pid_to_interrupt, sizeof(uint32_t));
         enviar_paquete(paquete, socket);
         eliminar_paquete(paquete);
-
-        printf("\nMensaje enviado.\n");
+        msg = string_from_format("Proceso %lu - FIN QUANTUM", (unsigned long) local_pid_to_interrupt);
+        logger_monitor_info(logger_interrupt, msg);
+        free(msg);
+        msg = NULL;
     }
     
-    printf("Terminando programa.\n");
     liberar_conexion(socket);
-
+    log_destroy(logger_interrupt);
     exit(EXIT_SUCCESS);
     return NULL;
 }
