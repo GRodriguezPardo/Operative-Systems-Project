@@ -32,11 +32,14 @@ int main(int argc, char **argv)
     {
         *tamanio_segmento = (uint32_t)strtoul(segmentos[i], NULL, 10);
         agregar_a_paquete(paquete_inicial, (void *)tamanio_segmento, sizeof(uint32_t));
+        free(segmentos[i]);
     }
+    free(segmentos);
+    free(tamanio_segmento);
 
     ////////////// ARCHIVO INSTRUCCIONES Y EMPAQUETADO //////////////
     FILE *archivo = fopen(argv[2], "r"); // abrir archivo en argv 2
-    char *instruccion;
+    char *instruccion = NULL;
     size_t len = 254;
     ssize_t nread;
 
@@ -48,6 +51,7 @@ int main(int argc, char **argv)
         free(instruccion);
         instruccion = NULL;
     };
+    free(instruccion);
 
     fclose(archivo);
 
@@ -108,6 +112,9 @@ int main(int argc, char **argv)
         codigo_operacion = recibir_operacion(socket);
         tamaño_paquete = largo_paquete(socket);
     }
+
+    free(input);
+    config_destroy(config);
 
     liberar_conexion(socket);
 

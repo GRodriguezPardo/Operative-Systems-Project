@@ -24,18 +24,19 @@ void *interrupt_routine(void* socket){
     {
         char buffer[25];
         sprintf(buffer, "Cpu - Kernel interrupt");
-        logger = log_create("../Cpu.log", buffer, 0, LOG_LEVEL_INFO);
+        logger = log_create("../cpu.log", buffer, 0, LOG_LEVEL_INFO);
     }
 
     /////////// Recibiendo Interrupciones //////////
     while (1)
     {
         codigo_operacion = recibir_operacion(socket_cliente);
+        int __attribute__((unused)) tamanio = largo_paquete(socket_cliente);
         switch(codigo_operacion) {
             case DESALOJO_PROCESO:
                 msg = recibir(socket_cliente);
                 pthread_mutex_lock(&mutex_logger);
-                log_info(logger,"Recibi el mensaje: %s\nEn el socket: %d\n", (char*) msg, socket_cliente);
+                log_info(logger,"Recibi el mensaje: %d\nEn el socket: %d\n", *(int*) msg, socket_cliente);
                 pthread_mutex_unlock(&mutex_logger);
                 pid_interrupt = *((uint32_t*)msg);
                 free(msg);
