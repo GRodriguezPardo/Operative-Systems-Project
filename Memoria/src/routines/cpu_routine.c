@@ -6,51 +6,63 @@ void escribir_memoria(uint32_t direccionFisica, uint32_t valor);
 void devolver_cpu(int socket, op_code code, uint32_t valor);
 
 void cpu_routine(int socketFd, int *returnStatus){
+    uint32_t valorRespuesta = 0;
+    op_code codRespuesta;
     uint32_t direccionFisica;
-    uint32_t valor;
 
     recibir_handshake(socketFd, INIT_CPU);
     responder_handshakeCPU(socketFd);
 
     while(1){
-        op_code op = recibir_operacion(socketFd);
-        switch (op)
+        op_code codPeticion = recibir_operacion(socketFd);
+        codRespuesta = codPeticion;
+        int __attribute__((unused)) tamanio = largo_paquete(socketFd);
+
+        aplicar_retardo(configMemoria.retardoMemoria);
+        switch (codPeticion)
         {
         case MOV_IN:
             direccionFisica = recibir_uint32t(socketFd); //recibo la direccion
-            valor = leer_memoria(direccionFisica);
-            devolver_cpu(socketFd, op, valor);
+            valorRespuesta = leer_memoria(direccionFisica);
             break;
         case MOV_OUT:
             direccionFisica = recibir_uint32t(socketFd); //recibo la direccion
-            valor = recibir_uint32t(socketFd); //recibo el valor a escribir
-            escribir_memoria(direccionFisica, valor);
-            devolver_cpu(socketFd, op, 0);
+            uint32_t valorAEscribir = recibir_uint32t(socketFd); //recibo el valor a escribir
+            escribir_memoria(direccionFisica, valorAEscribir);
             break;
         case MMU_MARCO:
             uint32_t idTabla = recibir_uint32t(socketFd);
             uint32_t numPagina = recibir_uint32t(socketFd);
-            uint32_t marco = pag_obtenerMarcoPagina(idTabla, numPagina);
+            uint32_t marco;
 
-            if (marco == -1)
-                devolver_cpu(socketFd, PAGE_FAULT, NULL);
-            else
-                devolver_cpu(socketFd, op, marco);
-                           
+            if (pag_obtenerMarcoPagina(idTabla, numPagina, &marco) == -1)
+                codRespuesta = PAGE_FAULT;
+            else 
+                valorRespuesta = marco;
+
             break;
         default:
             break;
         }
+
+        devolver_cpu(socketFd, codRespuesta, valorRespuesta);
     }
+
+    pthread_mutex_unlock(&mx_main);
+    pthread_exit(returnStatus);
 }
 
-static void responder_handshakeCPU(int socket){ 
+static void responder_handshakeCPU(int socket){
     //mandar entradasXtablaPaginas y tamanioPagina
     t_paquete *pack = crear_paquete(INIT_CPU);
     agregar_a_paquete(pack, (void *)&(configMemoria.entradasPorTabla), sizeof(configMemoria.entradasPorTabla));
     agregar_a_paquete(pack, (void *)&(configMemoria.tamanioPagina), sizeof(configMemoria.tamanioPagina));
     enviar_paquete(pack, socket);
     eliminar_paquete(pack);
+
+    char *msg = string_from_format("CPU Thread :: entradasPorTabla: %d // tamanioPagina: %d enviados.", configMemoria.entradasPorTabla, configMemoria.tamanioPagina);
+    loggear_info(logger, msg);
+    free(msg);
 }
 
 uint32_t leer_memoria(uint32_t offset){
@@ -73,22 +85,3 @@ void devolver_cpu(int socket, op_code code, uint32_t valor){
     enviar_paquete(pack, socket);
     eliminar_paquete(pack);
 }
-
-    /*
-    while (true)
-
-    - recibir operacion
-        MOV_IN (lectura)
-            recibo: direccion fisica
-            - leer de memoria
-            - devolver valor
-        MOV_OUT (escritura)
-            recibo: dir fisica + valor
-            - escribir en memoria
-            - devolver OK
-        MMU_FETCH
-            recibo: id_tabla + num_pagina
-            - pag_obtenerMarcoPagina();
-            - devolver num_marco || PAGE_FAULT
-    */
-    

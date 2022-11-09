@@ -3,6 +3,7 @@
 
 #include "memoria_globals.h"
 #include "swap.h"
+#include <commons/string.h>
 #include <thesenate/tcp_serializacion.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,9 +15,7 @@ void loggear_error(t_log *, char *);
 
 void recibir_handshake(int socket, op_code codigo);
 
-void aplicar_retardoMemoria();
-void aplicar_retardoSwap();
-
+void aplicar_retardo(uint32_t tiempo_ms);
 uint32_t recibir_uint32t(int socket);
 
 #endif //MEMORIA_UTILS_H_

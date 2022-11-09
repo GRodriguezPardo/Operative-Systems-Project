@@ -4,38 +4,44 @@
 static void liberar_espacioKernel();
 
 int main(int argc, char** argv){
-    puts("Iniciando módulo memoria...");
+    logger = log_create("../memoria.log", "Memoria - Main", 1, LOG_LEVEL_INFO);
+    pthread_mutex_init(&mx_logger, NULL);
+
+    loggear_info(logger, "Iniciando módulo memoria...");
 
     // Iniciando config y logs
     config = config_create("../memoria.config");
     if (config == NULL)
     {
-        perror("Archivo de configuración no encontrado.");
+        loggear_error(logger, "Archivo de configuración no encontrado.");
         exit(EXIT_FAILURE);
     }
-    logger = log_create("../memoria.log", "Memoria - Main", 0, LOG_LEVEL_INFO);
-    pthread_mutex_init(&mx_logger, NULL);
 
     cargar_configuracion_memoria();
+    loggear_info(logger, "Configuración memoria cargada.");
 
     // Inicializando espacio de datos y de Kernel
     memoriaPrincipal = malloc(configMemoria.tamanioMemoria); //espacio de usuario
     pthread_mutex_init(&mx_memoriaPrincipal, NULL);
+    loggear_info(logger, "Espacio memoria inicializado.");
     espacioKernel = list_create(); //estructura para las tablas de páginas
     pthread_mutex_init(&mx_espacioKernel, NULL);
+    loggear_info(logger, "Espacio Kernel inicializado.");
 
     swap_inicializar();
+    loggear_info(logger, "Espacio SWAP inicializado.");
 
     // Creando Server
-    puts("Creando server de memoria.");
+    loggear_info(logger, "Iniciando server...");
     pthread_t threadSv;
     if (pthread_create(&threadSv, NULL, &levantar_server_memoria, (void *) config) < 0) {
-        perror("Thread de memoria falló.");
-        return EXIT_FAILURE;
+        loggear_error(logger, "Error al iniciar servidor.");
+        exit(EXIT_FAILURE);
     }
+    loggear_info(logger, "Servidor OK.");
 
     esperar_hilos();
-    puts("Finalizando módulo memoria...");
+    loggear_info(logger, "Finalizando módulo memoria...");
     finalizar_memoria();
     return EXIT_SUCCESS;
 }
@@ -46,9 +52,9 @@ void *levantar_server_memoria(void * config){
     pthread_exit(return_status);
 }
 
-void *atender_conexion(void *socketFd){
+void *atender_conexion(void *arg){
     int *return_status = (int*)malloc(sizeof(int));
-    int socket = *(int *) socketFd;
+    int socket = *(int *)arg;
     *return_status = 0;
     op_code cod_operacion = recibir_operacion(socket);
     switch (cod_operacion)
@@ -62,9 +68,6 @@ void *atender_conexion(void *socketFd){
     default:
         break;
     }
-
-    pthread_mutex_unlock(&mx_main);
-    pthread_exit(return_status);
 }
 
 void cargar_configuracion_memoria(){
@@ -86,11 +89,12 @@ void finalizar_memoria(){
     liberar_espacioKernel();
     swap_cerrar();
 
-    config_destroy(config);
-    log_destroy(logger);
-    
+    config_destroy(config);  
     pthread_mutex_destroy(&mx_main);
+
+    loggear_info(logger, "Módulo memoria finalizado.");
     pthread_mutex_destroy(&mx_logger);
+    log_destroy(logger);
 }
 
 /// @brief Libera el espacio de tablas de páginas.

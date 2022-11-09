@@ -7,14 +7,16 @@ void esperar_hilos(){
 }
 
 void recibir_handshake(int socketFd, op_code codigo) {
-    char *cliente = (codigo == INIT_KERNEL) ? "Kernel" : "CPU"; 
-    printf("Se conectó %s.", cliente);
-    //log_debug(logger, "Se conectó %s.", cliente);
+    char *msg = string_from_format("Se conectó %s.", (codigo == INIT_KERNEL) ? "Kernel" : "CPU");
+    loggear_info(logger, msg);
+    free(msg);
 
-    char *handshakeMsg = (char *)recibir(socketFd);
-    printf("ACK Recibido: %s", handshakeMsg);
-    //log_debug(logger, "ACK Recibido: %s", handshakeMsg);
+    int __attribute__((unused)) tamanio = largo_paquete(socketFd);
+    void *handshakeMsg = recibir(socketFd);
+    msg = string_from_format("ACK Recibido: %d", *(int *)handshakeMsg);
+    loggear_info(logger, msg);
     free(handshakeMsg);
+    free(msg);
 }
 
 void loggear_info(t_log *log, char *msg){
@@ -29,18 +31,14 @@ void loggear_error(t_log *log, char *msg){
     pthread_mutex_unlock(&mx_logger);
 }
 
-void aplicar_retardoMemoria(){
-    sleep(configMemoria.retardoMemoria / 1000); //retardo está en milisegundos
-}
-
-void aplicar_retardoSwap(){
-    sleep(configMemoria.retardoSwap / 1000);
+void aplicar_retardo(uint32_t tiempo_ms){
+    sleep(tiempo_ms / 1000); //tiempo_ms está en milisegundos
 }
 
 uint32_t recibir_uint32t(int socket){
     uint32_t valor;
-    void *msg = recibir(socket);
-    valor = *((uint32_t *)msg);
-    free(msg);
+    void *buffer = recibir(socket);
+    valor = *((uint32_t *)buffer);
+    free(buffer);
     return valor;
 }
