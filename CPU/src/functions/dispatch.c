@@ -105,6 +105,10 @@ void *dispatch_routine(void* socket){
             for(size_t i = 0;i<4;i++){
                 mi_contexto->segmentos[i] = segmentos[i];
             }
+            pthread_mutex_lock(&mutex_flag);
+            pid_interrupt = -1;
+            flag_interrupcion = 0;
+            pthread_mutex_unlock(&mutex_flag);
         }
 
         sem_post(&sem_ciclo_instruccion);
