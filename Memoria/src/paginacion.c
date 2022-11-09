@@ -15,16 +15,20 @@ t_list *pag_crearTablaPaginas(uint32_t tamanioSegmento){
     return tablaPaginas;
 }
 
-uint32_t pag_obtenerMarcoPagina(uint32_t idTablaPaginas, uint32_t idPagina){
-    aplicar_retardoMemoria();
-
+int pag_obtenerMarcoPagina(uint32_t idTablaPaginas, uint32_t idPagina, uint32_t *marco){
+    int retVal = 0;
     pthread_mutex_lock(&mx_espacioKernel);
     t_list *tabla = list_get(espacioKernel, idTablaPaginas);
     pthread_mutex_unlock(&mx_espacioKernel);
 
     t_tablaPaginas_pag *pagina = list_get(tabla, idPagina);
+
+    if (pagina->presente)
+        *marco = pagina->marco;
+    else
+        retVal = -1;
     
-    return (pagina->presente) ? (pagina->marco) : -1;
+    return retVal;
 }
 
 void pag_destruirTablaPaginas(t_list *tablaPag){
