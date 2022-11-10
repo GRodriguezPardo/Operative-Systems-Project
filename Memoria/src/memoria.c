@@ -1,5 +1,6 @@
 #include "memoria.h"
 #include <string.h>
+#include <math.h>
 
 static void liberar_espacioKernel();
 
@@ -21,11 +22,11 @@ int main(int argc, char** argv){
     loggear_info(logger, "Configuración memoria cargada.");
 
     // Inicializando espacio de datos y de Kernel
-    memoriaPrincipal = malloc(configMemoria.tamanioMemoria); //espacio de usuario
-    pthread_mutex_init(&mx_memoriaPrincipal, NULL);
+    espacioUsuario = malloc(configMemoria.tamanioMemoria); //espacio de usuario
+    pthread_mutex_init(&mx_espacioUsuario, NULL);
     loggear_info(logger, "Espacio memoria inicializado.");
-    espacioKernel = list_create(); //estructura para las tablas de páginas
-    pthread_mutex_init(&mx_espacioKernel, NULL);
+    espacioTablasPag = list_create(); //estructura para las tablas de páginas
+    pthread_mutex_init(&mx_espacioTablasPag, NULL);
     loggear_info(logger, "Espacio Kernel inicializado.");
 
     swap_inicializar();
@@ -85,7 +86,7 @@ void cargar_configuracion_memoria(){
 }
 
 void finalizar_memoria(){
-    free(memoriaPrincipal);
+    free(espacioUsuario);
     liberar_espacioKernel();
     swap_cerrar();
 
@@ -99,6 +100,6 @@ void finalizar_memoria(){
 
 /// @brief Libera el espacio de tablas de páginas.
 static void liberar_espacioKernel(){
-    list_destroy_and_destroy_elements(espacioKernel, &pag_destruirTablaPaginas);
-    pthread_mutex_destroy(&mx_espacioKernel);
+    list_destroy_and_destroy_elements(espacioTablasPag, &pag_destruirTablaPaginas);
+    pthread_mutex_destroy(&mx_espacioTablasPag);
 }

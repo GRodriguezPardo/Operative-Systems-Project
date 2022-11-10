@@ -28,7 +28,7 @@ typedef enum op_code
     INIT_KERNEL,
     MMU_MARCO,
     PAGE_FAULT,
-    READY_PROCESO,
+    SWAP,
 
     // KERNEL - CPU
     INIT_CPU,

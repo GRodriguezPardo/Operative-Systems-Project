@@ -1,9 +1,10 @@
 #include "cpu_routine.h"
+#include <commons/collections/queue.h>
 
 static void responder_handshakeCPU(int socket);
 uint32_t leer_memoria(uint32_t direccionFisica);
 void escribir_memoria(uint32_t direccionFisica, uint32_t valor);
-void devolver_cpu(int socket, op_code code, uint32_t valor);
+void responder_cpu(int socket, op_code code, uint32_t valor);
 
 void cpu_routine(int socketFd, int *returnStatus){
     uint32_t valorRespuesta = 0;
@@ -21,6 +22,7 @@ void cpu_routine(int socketFd, int *returnStatus){
         aplicar_retardo(configMemoria.retardoMemoria);
         switch (codPeticion)
         {
+        /* QUE PASA SI MMU SACA LA DIRECCION FISICA DIRECTAMENTE DESDE TLB Y ESE MARCO FUE REEMPLAZADO */
         case MOV_IN:
             direccionFisica = recibir_uint32t(socketFd); //recibo la direccion
             valorRespuesta = leer_memoria(direccionFisica);
@@ -35,19 +37,25 @@ void cpu_routine(int socketFd, int *returnStatus){
             uint32_t numPagina = recibir_uint32t(socketFd);
             uint32_t marco;
 
-            if (pag_obtenerMarcoPagina(idTabla, numPagina, &marco) == -1)
+            if (pag_obtenerMarcoPagina(idTabla, numPagina, &marco) == -1){
                 codRespuesta = PAGE_FAULT;
+                /* GUARDAR TABLA Y PAGINA PARA QUE HILO KERNEL PUEDA HACER EL SWAP MAS ADELANTE */
+            }
             else 
                 valorRespuesta = marco;
 
             break;
         default:
+            *returnStatus = EXIT_FAILURE;
+            pthread_mutex_unlock(&mx_main);
+            pthread_exit(returnStatus);
             break;
         }
 
-        devolver_cpu(socketFd, codRespuesta, valorRespuesta);
+        responder_cpu(socketFd, codRespuesta, valorRespuesta);
     }
 
+    *returnStatus = EXIT_SUCCESS;
     pthread_mutex_unlock(&mx_main);
     pthread_exit(returnStatus);
 }
@@ -67,19 +75,19 @@ static void responder_handshakeCPU(int socket){
 
 uint32_t leer_memoria(uint32_t offset){
     uint32_t valor;
-    pthread_mutex_lock(&mx_memoriaPrincipal);
-    valor = *(uint32_t *)(memoriaPrincipal + offset);
-    pthread_mutex_unlock(&mx_memoriaPrincipal);
+    pthread_mutex_lock(&mx_espacioUsuario);
+    valor = *(uint32_t *)(espacioUsuario + offset);
+    pthread_mutex_unlock(&mx_espacioUsuario);
     return valor;
 }
 
 void escribir_memoria(uint32_t offset, uint32_t valor){
-    pthread_mutex_lock(&mx_memoriaPrincipal);
-    memcpy(memoriaPrincipal + offset, &valor, sizeof(uint32_t));
-    pthread_mutex_unlock(&mx_memoriaPrincipal);
+    pthread_mutex_lock(&mx_espacioUsuario);
+    memcpy(espacioUsuario + offset, &valor, sizeof(uint32_t));
+    pthread_mutex_unlock(&mx_espacioUsuario);
 }
 
-void devolver_cpu(int socket, op_code code, uint32_t valor){
+void responder_cpu(int socket, op_code code, uint32_t valor){
     t_paquete *pack = crear_paquete(code);
     agregar_a_paquete(pack, (void *)&valor, sizeof(valor));
     enviar_paquete(pack, socket);
