@@ -64,9 +64,9 @@ t_pcb *rr_obtener_siguiente_exec()
 
 void rr_sale_de_exec(t_pcb *pcb __attribute__((unused)), op_code __attribute__((unused)) source)
 {
-  /*  sem_wait(&sem_interrupt_algorithms);
+    sem_wait(&sem_interrupt_algorithms);
     pthread_cancel(last_clock_id);
-    sem_post(&sem_interrupt_algorithms);*/
+    sem_post(&sem_interrupt_algorithms);
     return;
 }
 
