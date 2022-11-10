@@ -15,7 +15,7 @@
 t_queue *cola_algoritmo_rr;
 pthread_mutex_t mutex_cola_rr;
 t_log *logger_rr;
-pthread_t last_clock_id;
+pthread_t last_clock_id_rr;
 
 void *rr_clock_interrupt(void *param);
 
@@ -52,21 +52,20 @@ t_pcb *rr_obtener_siguiente_exec()
     pthread_mutex_unlock(&mutex_cola_rr);
 
     uint32_t *id;
-
     {
         id = (uint32_t *)malloc(sizeof(uint32_t));
         *id = pcb->id;
     }
-    pthread_create(&last_clock_id, NULL, rr_clock_interrupt, (void *)id);
+    pthread_create(&last_clock_id_rr, NULL, rr_clock_interrupt, (void *)id);
 
     return pcb;
 }
 
 void rr_sale_de_exec(t_pcb *pcb __attribute__((unused)), op_code __attribute__((unused)) source)
 {
-  /*  sem_wait(&sem_interrupt_algorithms);
-    pthread_cancel(last_clock_id);
-    sem_post(&sem_interrupt_algorithms);*/
+    sem_wait(&sem_interrupt_algorithms);
+    pthread_cancel(last_clock_id_rr);
+    sem_post(&sem_interrupt_algorithms);
     return;
 }
 
