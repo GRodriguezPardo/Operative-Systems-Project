@@ -2,18 +2,30 @@
 #include "string.h"
 
 static int conectarAMemoria(char*, char*);
-static void realizarHandshake(int);
+static void realizarHandshake(int,t_log*);
 
-t_configMemoria configMemoria;
+void *memoria_routine(void *config){
+   // t_config *config = (t_config *)arg;
+    int socket;
+    t_log *loggerMemoria;
+    {
+        char buffer[25];
+        sprintf(buffer, "Cpu - Memoria Routine");
+        loggerMemoria = log_create("../cpu.log", buffer, 0, LOG_LEVEL_INFO);
+    }
 
-void *memoria_com(void *arg){
-    t_config *config = (t_config *)arg;
+    char* ip = config_get_string_value(config, "IP_MEMORIA");
+    char* puerto = config_get_string_value(config, "PUERTO_MEMORIA");
+    socket = crear_conexion(ip, puerto);
 
-    configMemoria.ip = config_get_string_value(config, "IP_MEMORIA");
-    configMemoria.puerto = config_get_string_value(config, "PUERTO_MEMORIA");
+    realizarHandshake(socket,loggerMemoria);
 
-    /*int socketMemoria = conectarAMemoria(configMemoria.ip, configMemoria.puerto);
-    realizarHandshake(socketMemoria);
+    while(1){
+        sem_wait(&sem_conexion_memoria);
+
+
+    }
+
     
     /*
     while(true)
@@ -48,7 +60,7 @@ static int conectarAMemoria(char *ip, char *puerto){
     return socketFd;
 }
 
-static void realizarHandshake(int socket){
+static void realizarHandshake(int socket, t_log* logger){
     t_paquete *pack = crear_paquete(INIT_CPU);
     int valor = 0;
     agregar_a_paquete(pack, &valor, sizeof(int));
@@ -57,14 +69,21 @@ static void realizarHandshake(int socket){
     
     //recibo respuesta
     op_code code = recibir_operacion(socket);
+    if(code != INIT_MEMORIA){
+            perror("Error: Conexion con memoria no recibio mensaje esperado");
+            logger_cpu_error(logger, "Error: Conexion con memoria recibio un mensaje inesperado en el handshake.");
+            exit(EXIT_FAILURE);
+    }
+
+
     int __attribute__((unused)) tamanio = largo_paquete(socket);
 
     //recibo los valores de configuracion de mmu
     //recibo la cantidad de entradas por tabla de paginas
-    configMemoria.entradasTablaPaginas = recibir_uint32t(socket);
+    configMemoria->entradasTablaPaginas = recibir_uint32t(socket);
     //recibo el tamaño de pagina
-    configMemoria.tamanioPagina = recibir_uint32t(socket);
-    configMemoria.tamanioMaximoSegmento = configMemoria.entradasTablaPaginas * configMemoria.tamanioPagina;
+    configMemoria->tamanioPagina = recibir_uint32t(socket);
+    configMemoria->tamanioMaximoSegmento = configMemoria->entradasTablaPaginas * configMemoria->tamanioPagina;
 }
 
 uint32_t recibir_uint32t(int socket){

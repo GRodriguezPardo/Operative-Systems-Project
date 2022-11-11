@@ -2,16 +2,21 @@
 #define KERNEL_H_
 
 t_contexto *mi_contexto;
+t_configMemoria *configMemoria;
 
 int flag_interrupcion;
 
 void **pipeline;
+void **pipelineMemoria;
+
+t_tlb *tlb;
 
 uint32_t pid_interrupt;
 
 sem_t sem;
 sem_t sem_ciclo_instruccion;
 sem_t sem_envio_contexto;
+sem_t sem_conexion_memoria;
 
 pthread_mutex_t mutex_logger;
 pthread_mutex_t mutex_dispatch_response;

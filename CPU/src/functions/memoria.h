@@ -10,17 +10,11 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
-
-typedef struct _configMem
-{
-    char *ip;
-    char *puerto;
-    uint32_t entradasTablaPaginas;
-    uint32_t tamanioPagina;
-    uint32_t tamanioMaximoSegmento;
-} t_configMemoria;
+#include "../globals.h"
+#include "../cpu_utils.h"
 
 
-void *memoria_com(void*);
+void *memoria_routine(void*);
 uint32_t recibir_uint32t(int socket);
+
 #endif /* MEMORIA_H_ */

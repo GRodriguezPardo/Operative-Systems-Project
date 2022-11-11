@@ -15,6 +15,7 @@
 #include "./functions/ciclo.h"
 #include "./functions/dispatch.h"
 #include "./functions/interrupt.h"
+#include "./functions/memoria.h"
 
 sem_t sem,sem_ciclo_instruccion,sem_envio_contexto;
 
@@ -24,21 +25,27 @@ int main(){
     printf("%s\n", config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT"));
     t_log *logger = log_create("../cpu.log", "CPU - Main", 0, LOG_LEVEL_INFO);
     init_globals_cpu();
-    pthread_t interrupt, dispatch, executer;
+    pthread_t interrupt, dispatch, executer, memoria;
     if (pthread_create(&interrupt, NULL, interrupt_server, (void *) config) < 0)
     {
-        perror("Error: Memoria thread failed."); // cambiar a los logs
+        perror("Error: Interrupt thread failed."); // cambiar a los logs
     }
 
     if (pthread_create(&dispatch, NULL, dispatch_server, (void *) config) < 0)
     {
-        perror("Error: Memoria thread failed."); // cambiar a los logs
+        perror("Error: Dispatch thread failed."); // cambiar a los logs
     }
     
     if (pthread_create(&executer, NULL,ciclo_instruccion, (void *) config) < 0)
     {
-        perror("Error: ciclo instruccion thread failed."); // cambiar a los logs
+        perror("Error: Ciclo instruccion thread failed."); // cambiar a los logs
     }
+
+    if (pthread_create(&memoria, NULL,memoria_routine, (void *) config) < 0)
+    {
+        perror("Error: Memoria routine thread failed."); // cambiar a los logs
+    }
+
 
     sem_init(&sem, 1, 0);
     sem_wait(&sem);

@@ -17,9 +17,26 @@ typedef struct t_pipeline {
 } t_pipeline;
 
 typedef struct t_segmento {
+    uint32_t nro_segmento;
     uint32_t tamanio;
     uint32_t identificador_tabla;
 } t_segmento;
+
+typedef struct t_tlb {
+    uint32_t pid;
+    uint32_t nro_segmento;
+    uint32_t nro_pag;
+    uint32_t marco;
+    t_pipeline pipelineMemoria;
+} t_tlb;
+
+typedef struct _configMem{
+    uint32_t entradasTablaPaginas;
+    uint32_t tamanioPagina;
+    uint32_t tamanioMaximoSegmento;
+    int entradasTLB;
+} t_configMemoria;
+
 
 typedef struct t_contexto
 {
@@ -33,13 +50,16 @@ typedef struct t_contexto
     t_pipeline pipeline;
 } t_contexto;
 
-
-
 extern int flag_interrupcion;
 
 extern t_contexto *mi_contexto;
 
+extern t_configMemoria *configMemoria;
+
+extern t_tlb *tlb;
+
 extern void **pipeline;
+extern void **pipelineMemoria;
 
 extern pthread_mutex_t mutex_logger;
 
@@ -51,10 +71,10 @@ extern pthread_mutex_t mutex_flag;
 
 extern uint32_t pid_interrupt;
 
-
 extern sem_t sem;
 extern sem_t sem_ciclo_instruccion;
 extern sem_t sem_envio_contexto;
+extern sem_t sem_conexion_memoria;
 
 
 #endif 

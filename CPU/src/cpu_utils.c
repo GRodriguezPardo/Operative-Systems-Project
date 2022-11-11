@@ -9,15 +9,21 @@
 #include "cpu_utils.h"
 #include "globals.h"
 
-void init_globals_cpu()
+void init_globals_cpu(t_config *config)
 {
+    int entradasTLB = config_get_int_value((t_config*) config, "ENTRADAS_TLB");
+
     pthread_mutex_init(&mutex_logger, NULL);
     pthread_mutex_init(&mutex_dispatch_response, NULL);
     pthread_mutex_init(&mutex_ejecucion, NULL);
     pthread_mutex_init(&mutex_flag, NULL);
     sem_init(&sem_ciclo_instruccion,0,0);
     sem_init(&sem_envio_contexto,0,0);
+    sem_init(&sem_conexion_memoria,0,0);
     mi_contexto=(t_contexto*)malloc(sizeof(t_contexto));
+    configMemoria=(t_configMemoria*)malloc(sizeof(t_configMemoria));
+    configMemoria->entradasTLB = entradasTLB;
+    tlb=(t_tlb*)malloc(sizeof(t_tlb)*(entradasTLB));
 }
 
 void finalizar_cpu(t_config *config, t_log *logger)
@@ -30,6 +36,8 @@ void finalizar_cpu(t_config *config, t_log *logger)
     sem_close(&sem_ciclo_instruccion);
     sem_close(&sem_envio_contexto);
     free(mi_contexto);
+    free(configMemoria);
+    free(tlb);
     log_info(logger, "Finalizando programa.");
     log_destroy(logger);
     config_destroy(config);

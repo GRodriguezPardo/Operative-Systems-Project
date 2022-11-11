@@ -37,7 +37,12 @@ typedef enum op_code
     BLOQUEO_PROCESO,
     INTERRUPCION,
     PROXIMO_PCB,
-    CONTEXTO
+    CONTEXTO,
+
+    //MEMORIA - CPU
+    INIT_MEMORIA,
+    DIRECCION_FISICA
+    
 }op_code;
 
 typedef struct
