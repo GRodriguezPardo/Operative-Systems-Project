@@ -75,15 +75,13 @@ void *cpu_dispatch_routine(void *config)
             break;
         case BLOQUEO_PROCESO:
             unPcb = obtener_y_actualizar_pcb_recibido(socket);
-
+            sale_de_exec(unPcb, BLOQUEO_PROCESO);
 
             {   ////////////// LOGGEANDO //////////////
                 pthread_mutex_lock(&mutex_logger);
                 log_info(logger_dispatch, "Proceso %lu : EXEC -> BLOCKED (BLOQUEO)", (unsigned long)(unPcb->id));
                 pthread_mutex_unlock(&mutex_logger);
             }
-
-            sale_de_exec(unPcb, BLOQUEO_PROCESO);
 
             {   ////////////// BLOCKEANDO //////////////
                 dispositivo = (char*)recibir(socket);

@@ -35,10 +35,10 @@ extern t_log *logger;
 extern t_memoria_config configMemoria;
 extern pthread_mutex_t mx_logger;
 extern pthread_mutex_t mx_main;
-extern pthread_mutex_t mx_memoriaPrincipal;
-extern pthread_mutex_t mx_espacioKernel;
-extern void *memoriaPrincipal;
-extern t_list *espacioKernel;
+extern pthread_mutex_t mx_espacioUsuario;
+extern pthread_mutex_t mx_espacioTablasPag;
+extern void *espacioUsuario;
+extern t_list *espacioTablasPag;
 extern t_list *tablaFrames;
 extern int swapFd;
 

@@ -18,6 +18,8 @@ t_queue *cola_algoritmo_feedback_rr;
 t_queue *cola_algoritmo_feedback_fifo;
 pthread_mutex_t mutex_cola_feedback;
 t_log *logger_fb;
+pthread_t last_clock_id_fb;
+bool is_rr;
 
 void feedback_init_algoritmo()
 {
@@ -25,6 +27,7 @@ void feedback_init_algoritmo()
     cola_algoritmo_feedback_fifo = queue_create();
     pthread_mutex_init(&mutex_cola_feedback, NULL);
     logger_fb = log_create("../kernel.log", "Kernel - Algoritmo FEEDBACK", 0, LOG_LEVEL_INFO);
+    is_rr = 0;
 }
 
 void feedback_final_algoritmo()
@@ -74,16 +77,17 @@ t_pcb *feedback_obtener_siguiente_exec()
         pcb = (t_pcb *)queue_pop(cola_algoritmo_feedback_rr);
 
         uint32_t *id;
-        pthread_t thread_id;
         {
             id = (uint32_t *)malloc(sizeof(uint32_t));
             *id = pcb->id;
         }
-        pthread_create(&thread_id, NULL, feedback_clock_interrupt, (void *)id);
+        pthread_create(&last_clock_id_fb, NULL, feedback_clock_interrupt, (void *)id);
+        is_rr = 1;
     }
     else
     {
         pcb = (t_pcb *)queue_pop(cola_algoritmo_feedback_fifo);
+        is_rr = 0;
     }
 
     pthread_mutex_unlock(&mutex_cola_feedback);
@@ -92,6 +96,12 @@ t_pcb *feedback_obtener_siguiente_exec()
 
 void feedback_sale_de_exec(t_pcb *pcb __attribute__((unused)), op_code __attribute__((unused)) source)
 {
+    if(is_rr)
+    {
+        sem_wait(&sem_interrupt_algorithms);
+        pthread_cancel(last_clock_id_fb);
+        sem_post(&sem_interrupt_algorithms);
+    }
     return;
 }
 

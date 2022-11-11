@@ -14,9 +14,9 @@
 t_config *config;
 t_log *logger;
 t_memoria_config configMemoria;
-pthread_mutex_t mx_logger, mx_main, mx_memoriaPrincipal, mx_espacioKernel;
-void *memoriaPrincipal;
-t_list *espacioKernel;
+pthread_mutex_t mx_logger, mx_main, mx_espacioUsuario, mx_espacioTablasPag;
+void *espacioUsuario;
+t_list *espacioTablasPag;
 t_list *tablaFrames;
 
 void (*reemplazarPagina)();
