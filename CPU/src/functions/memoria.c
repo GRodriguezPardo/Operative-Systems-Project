@@ -18,12 +18,59 @@ void *memoria_routine(void *config){
     char* puerto = config_get_string_value(config, "PUERTO_MEMORIA");
     socket = crear_conexion(ip, puerto);
 
+    int __attribute__((unused)) tamanio_paquete, tamanio_restante;
+    void* msg = NULL;
+    t_paquete* paquete;
+
+    op_code codigo_operacion;
+
     realizarHandshake(socket,loggerMemoria);
 
     while(1){
         sem_wait(&sem_conexion_memoria);
-
-
+        switch (configMemoria->pipelineMemoria.operacion){
+        case MOV_IN:
+         paquete = crear_paquete(MOV_IN);
+         agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.valor),sizeof(uint32_t));
+         enviar_paquete(paquete,socket);
+         eliminar_paquete(paquete);
+         break;
+        case MOV_OUT:
+         paquete = crear_paquete(MOV_OUT);
+         agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.valor),sizeof(uint32_t));
+         enviar_paquete(paquete,socket);
+         eliminar_paquete(paquete);
+         break;
+        case MMU_MARCO:
+         paquete = crear_paquete(MMU_MARCO);
+         agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.idPagina),sizeof(uint32_t));
+         agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.idTablaPagina),sizeof(uint32_t));
+         enviar_paquete(paquete,socket);
+         eliminar_paquete(paquete);
+        break;
+        default:
+         pthread_mutex_lock(&mutex_logger);
+         log_error(loggerMemoria,"Llego codigo desconocido a conexion con memoria");
+         pthread_mutex_unlock(&mutex_logger);
+        break;
+        }
+        codigo_operacion = recibir_operacion(socket);
+        tamanio_paquete = tamanio_restante = largo_paquete(socket);
+        switch (codigo_operacion)
+        {
+        case PAGE_FAULT:
+        break;
+        case MMU_MARCO:
+        break;
+        case 0: // valor a definir
+        break; 
+        
+        default:
+         pthread_mutex_lock(&mutex_logger);
+         log_error(loggerMemoria,"Recibi codigo desconocido a conexion con memoria");
+         pthread_mutex_unlock(&mutex_logger);
+        break;
+        }
     }
 
     

@@ -5,6 +5,7 @@ t_contexto *mi_contexto;
 t_configMemoria *configMemoria;
 
 int flag_interrupcion;
+int flag_segFault;
 
 void **pipeline;
 void **pipelineMemoria;
@@ -17,6 +18,7 @@ sem_t sem;
 sem_t sem_ciclo_instruccion;
 sem_t sem_envio_contexto;
 sem_t sem_conexion_memoria;
+sem_t sem_mmu;
 
 pthread_mutex_t mutex_logger;
 pthread_mutex_t mutex_dispatch_response;

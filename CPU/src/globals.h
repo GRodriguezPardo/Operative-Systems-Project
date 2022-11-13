@@ -14,6 +14,8 @@
 typedef struct t_pipeline {
     op_code operacion;
     uint32_t valor;
+    uint32_t idTablaPagina;
+    uint32_t idPagina;
 } t_pipeline;
 
 typedef struct t_segmento {
@@ -27,7 +29,6 @@ typedef struct t_tlb {
     uint32_t nro_segmento;
     uint32_t nro_pag;
     uint32_t marco;
-    t_pipeline pipelineMemoria;
 } t_tlb;
 
 typedef struct _configMem{
@@ -35,6 +36,7 @@ typedef struct _configMem{
     uint32_t tamanioPagina;
     uint32_t tamanioMaximoSegmento;
     int entradasTLB;
+    t_pipeline pipelineMemoria;
 } t_configMemoria;
 
 
@@ -44,13 +46,15 @@ typedef struct t_contexto
     char **instrucciones;
     uint32_t program_counter;
     uint32_t registros[4];
-    t_segmento segmentos[4];
-    char *dispositivo;
+    uint32_t cantSegmentos;
+    t_segmento segmentos[4]; // revisar, pueden ser mas de 4 
+    char *dispositivo; 
     uint32_t unidades;
     t_pipeline pipeline;
 } t_contexto;
 
 extern int flag_interrupcion;
+extern int flag_segFault;
 
 extern t_contexto *mi_contexto;
 
@@ -75,6 +79,7 @@ extern sem_t sem;
 extern sem_t sem_ciclo_instruccion;
 extern sem_t sem_envio_contexto;
 extern sem_t sem_conexion_memoria;
+extern sem_t sem_mmu;
 
 
 #endif 

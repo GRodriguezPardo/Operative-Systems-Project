@@ -20,6 +20,7 @@ void init_globals_cpu(t_config *config)
     sem_init(&sem_ciclo_instruccion,0,0);
     sem_init(&sem_envio_contexto,0,0);
     sem_init(&sem_conexion_memoria,0,0);
+    sem_init(&sem_mmu,0,0);
     mi_contexto=(t_contexto*)malloc(sizeof(t_contexto));
     configMemoria=(t_configMemoria*)malloc(sizeof(t_configMemoria));
     configMemoria->entradasTLB = entradasTLB;
@@ -35,6 +36,8 @@ void finalizar_cpu(t_config *config, t_log *logger)
     pthread_mutex_destroy(&mutex_flag);
     sem_close(&sem_ciclo_instruccion);
     sem_close(&sem_envio_contexto);
+    sem_close(&sem_conexion_memoria);
+    sem_close(&sem_mmu);
     free(mi_contexto);
     free(configMemoria);
     free(tlb);
