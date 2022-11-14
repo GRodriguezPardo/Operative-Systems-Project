@@ -1,9 +1,6 @@
 #include "memoria.h"
 #include "string.h"
 
-static int conectarAMemoria(char*, char*);
-static void realizarHandshake(int,t_log*);
-
 void *memoria_routine(void *config){
    // t_config *config = (t_config *)arg;
     int socket;
@@ -31,12 +28,13 @@ void *memoria_routine(void *config){
         switch (configMemoria->pipelineMemoria.operacion){
         case MOV_IN:
          paquete = crear_paquete(MOV_IN);
-         agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.valor),sizeof(uint32_t));
+         agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.direcFisica),sizeof(uint32_t));
          enviar_paquete(paquete,socket);
          eliminar_paquete(paquete);
          break;
         case MOV_OUT:
          paquete = crear_paquete(MOV_OUT);
+         agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.direcFisica),sizeof(uint32_t));
          agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.valor),sizeof(uint32_t));
          enviar_paquete(paquete,socket);
          eliminar_paquete(paquete);
@@ -59,18 +57,32 @@ void *memoria_routine(void *config){
         switch (codigo_operacion)
         {
         case PAGE_FAULT:
+         configMemoria->pipelineMemoria.operacion = PAGE_FAULT;
         break;
         case MMU_MARCO:
+         configMemoria->pipelineMemoria.operacion = MMU_MARCO;
+         configMemoria->numMarco = *((uint32_t*)msg);
+         free(msg);
+         msg = NULL;
         break;
-        case 0: // valor a definir
-        break; 
-        
+        case MOV_IN_VALOR:
+         configMemoria->pipelineMemoria.operacion = MOV_IN_VALOR;
+         configMemoria->pipelineMemoria.valor = *((uint32_t*)msg);
+         free(msg);
+         msg = NULL;
+        break;
+        case MOV_OUT_CONFIRMACION:
+         configMemoria->pipelineMemoria.operacion = MOV_OUT_CONFIRMACION;
+        break;
+               
         default:
          pthread_mutex_lock(&mutex_logger);
          log_error(loggerMemoria,"Recibi codigo desconocido a conexion con memoria");
          pthread_mutex_unlock(&mutex_logger);
         break;
         }
+        
+        sem_post(&sem_mmu);
     }
 
     
@@ -102,12 +114,7 @@ void *memoria_routine(void *config){
     pthread_exit(ret);*/
 }
 
-static int conectarAMemoria(char *ip, char *puerto){
-    int socketFd = crear_conexion(ip, puerto);
-    return socketFd;
-}
-
-static void realizarHandshake(int socket, t_log* logger){
+void realizarHandshake(int socket, t_log* logger){
     t_paquete *pack = crear_paquete(INIT_CPU);
     int valor = 0;
     agregar_a_paquete(pack, &valor, sizeof(int));

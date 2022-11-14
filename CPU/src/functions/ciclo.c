@@ -45,8 +45,26 @@ void decode(t_log *logger_cpu_ciclo, long retardo_instruccion, char* instruccion
                     usleep(retardo_instruccion * 1000);
                     auxCiclo->instruction_code = 1;   
                 }else if(!strcmp(auxCiclo->op,"MOV_IN")){
+                    if(!strcmp(auxCiclo->oper1,"AX")){
+                        auxCiclo->register1 = 0;
+                    } else if(!strcmp(auxCiclo->oper1,"BX")){
+                        auxCiclo->register1 = 1;
+                    }else if(!strcmp(auxCiclo->oper1,"CX")){
+                        auxCiclo->register1 = 2;
+                    }else if(!strcmp(auxCiclo->oper1,"DX")){
+                        auxCiclo->register1 = 3;    
+                    }
                     auxCiclo->instruction_code = 2;
                 }else if(!strcmp(auxCiclo->op,"MOV_OUT")){
+                     if(!strcmp(auxCiclo->oper2,"AX")){
+                        auxCiclo->register2 = 0;
+                    } else if(!strcmp(auxCiclo->oper2,"BX")){
+                        auxCiclo->register2 = 1;
+                    }else if(!strcmp(auxCiclo->oper2,"CX")){
+                        auxCiclo->register2 = 2;
+                    }else if(!strcmp(auxCiclo->oper2,"DX")){
+                        auxCiclo->register2 = 3;
+                    }
                     auxCiclo->instruction_code = 3;
                 }else if(!strcmp(auxCiclo->op,"I/O")){
                     auxCiclo->instruction_code = 4;
@@ -56,6 +74,7 @@ void decode(t_log *logger_cpu_ciclo, long retardo_instruccion, char* instruccion
 }
 
 void execute(t_auxCiclo* auxCiclo){
+    op_code operacion;
     switch(auxCiclo->instruction_code){
         case 0://set
             mi_contexto->registros[auxCiclo->register1] = (uint32_t)atoi(auxCiclo->oper2);
@@ -63,9 +82,41 @@ void execute(t_auxCiclo* auxCiclo){
         case 1://add
             mi_contexto->registros[auxCiclo->register1] += mi_contexto->registros[auxCiclo->register2];
             break;
-        case 2:
+        case 2://mov_in
+            operacion = MOV_IN;
+            configMemoria->pipelineMemoria.direcFisica = (uint32_t)atoi(auxCiclo->oper2);
+            operacion = traducciones(operacion);
+            switch(operacion){
+                case SEG_FAULT:
+                // flag_segFault = 1
+                break;
+                case PAGE_FAULT:
+                // flag_pageFault = 1
+                break;
+                case VALOR_OK:
+                 mi_contexto->registros[auxCiclo->register1] = configMemoria->pipelineMemoria.valor;
+                break;
+                default:
+            }
+            // ver si hace falta pisar los valores del pipeline
             break;
-        case 3:
+        case 3://mov_out
+            operacion = MOV_OUT;
+            configMemoria->pipelineMemoria.direcFisica =(uint32_t)atoi(auxCiclo->oper1);
+            configMemoria->pipelineMemoria.valor = mi_contexto->registros[auxCiclo->register2];
+            operacion = traducciones(operacion);
+            switch(operacion){
+                case SEG_FAULT:
+                // flag_segFault = 1
+                break;
+                case PAGE_FAULT:
+                // flag_pageFault = 1
+                break;
+                case VALOR_OK:
+                break;
+                default:
+            }
+            // ver si hace falta pisar los valores del pipeline
             break;
         case 4://I/O
             mi_contexto->dispositivo = auxCiclo->oper1;
@@ -137,6 +188,8 @@ void* ciclo_instruccion(void* config){
         ////////////// EXECUTE //////////////
             {
                 execute(auxCiclo);
+                // chequear que no hubo seg o page fault
+                // si hubo mando las cosas con el op_code 
             }
         mi_contexto->program_counter++;
 

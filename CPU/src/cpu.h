@@ -5,7 +5,7 @@ t_contexto *mi_contexto;
 t_configMemoria *configMemoria;
 
 int flag_interrupcion;
-int flag_segFault;
+
 
 void **pipeline;
 void **pipelineMemoria;

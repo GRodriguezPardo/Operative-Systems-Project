@@ -3,7 +3,7 @@
 
 
 
-bool buscarEnTLB(uint32_t num_segmento, uint32_t num_pagina, uint32_t desplazamiento_pag){
+bool buscarEnTLB(uint32_t num_segmento, uint32_t num_pagina, uint32_t desplazamiento_pag, op_code instruccion){
     uint32_t direcFisica;
     bool encontrado = false;
 
@@ -11,8 +11,8 @@ bool buscarEnTLB(uint32_t num_segmento, uint32_t num_pagina, uint32_t desplazami
         if(tlb[i].pid == mi_contexto->id && tlb[i].nro_pag == num_pagina && tlb[i].nro_segmento == num_segmento){
            encontrado = true;
            direcFisica = calcularDirecFisica(tlb[i].marco,desplazamiento_pag);
-           configMemoria->pipelineMemoria.operacion = DIRECCION_FISICA;               //revisar si no va ->!!!!
-           configMemoria->pipelineMemoria.valor = direcFisica;
+           configMemoria->pipelineMemoria.operacion = instruccion;  
+           configMemoria->pipelineMemoria.direcFisica = direcFisica;
            sem_post(&sem_conexion_memoria);
            break;
         }
@@ -36,8 +36,12 @@ void buscarMarco(uint32_t nroSegmento, uint32_t idPagina){
     }
 }
 
-uint32_t traducciones(uint32_t direcLogica){
-    uint32_t num_segmento, desplazamiento_segmento, num_pagina, desplazamiento_pag;
+op_code traducciones(op_code instruccion){ 
+    uint32_t num_segmento, desplazamiento_segmento, num_pagina, desplazamiento_pag,
+    direcFisica, direcLogica;
+
+    direcLogica = configMemoria->pipelineMemoria.direcLogica;
+
 
     num_segmento = floor(direcLogica / configMemoria->tamanioMaximoSegmento);
     desplazamiento_segmento = direcLogica % configMemoria->tamanioMaximoSegmento;
@@ -47,23 +51,34 @@ uint32_t traducciones(uint32_t direcLogica){
     //chequear que el desplazamiento_segmento sea menor que el tam max del segmento
     //si no se cumple mandar a kernel y seg fault
     if(desplazamiento_segmento > configMemoria->tamanioMaximoSegmento){
-        flag_segFault = 1;
-        return -1; // puede llegar a haber valores negativos?
+        return SEG_FAULT; 
     }
 
     //busco si tengo guardado en la tlb el marco
-    bool encontroTLB = buscarEnTLB(num_segmento,num_pagina,desplazamiento_pag);
+    bool encontroTLB = buscarEnTLB(num_segmento,num_pagina,desplazamiento_pag,instruccion);
 
-    if(encontroTLB){
+    if(encontroTLB){ // REVISAR SI ES NECESARIO
         sem_wait(&sem_mmu);
-        return configMemoria->pipelineMemoria.valor;
+        if(configMemoria->pipelineMemoria.operacion == PAGE_FAULT){
+            return PAGE_FAULT;
+        }
+        return VALOR_OK;//configMemoria->pipelineMemoria.valor;
     }else{
         buscarMarco(num_segmento,num_pagina);
         sem_wait(&sem_mmu);
+        if(configMemoria->pipelineMemoria.operacion == PAGE_FAULT){
+            return PAGE_FAULT;
+        }
         //reemplazoTLB(); ---> vamos a setear todos los pid en -1 cada vez que una entrada del tlb
         //                     esta vacia, si encontramos un -1 lo guardamos ahi sin hacer el algoritmo 
-        //calcularDirFisica();
-        //enviarInstruccion();
+        direcFisica = calcularDirecFisica(configMemoria->numMarco,desplazamiento_pag);
+        configMemoria->pipelineMemoria.operacion = instruccion;  
+        configMemoria->pipelineMemoria.direcFisica = direcFisica;
+        sem_wait(&sem_conexion_memoria);
+        if(configMemoria->pipelineMemoria.operacion == PAGE_FAULT){
+            return PAGE_FAULT;
+        }
+        return VALOR_OK;
     }
 
     //si no esta, pedirle a la memoria el marco y ver si tira o no page fault

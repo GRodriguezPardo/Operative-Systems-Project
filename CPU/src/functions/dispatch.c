@@ -21,9 +21,11 @@ void *dispatch_routine(void* socket){
     uint32_t id;
     uint32_t pc;
     uint32_t registros[4];
-    t_segmento segmentos[4];
+    t_segmento *segmentos;
     uint32_t cantidad = 0;
     char **instrucciones;
+    uint32_t cantSegmentos = 0;
+
 
     int __attribute__((unused)) tamanio_paquete, tamanio_restante;
     void* msg = NULL;
@@ -72,7 +74,12 @@ void *dispatch_routine(void* socket){
         msg = NULL;
         ////////////// Recibiendo Segmentos //////////////
         msg = recibir(socket_dispatch);
-        for(size_t i = 0;i<4;i++){
+        cantSegmentos = *((uint32_t*)msg);
+        free(msg);
+        msg = NULL;
+        msg = recibir(socket_dispatch);
+        segmentos = (t_segmento*)malloc(sizeof(t_segmento*) * (cantSegmentos));
+        for(size_t i = 0;i<cantSegmentos;i++){
             segmentos[i] = ((t_segmento *)msg)[i];
         }
         free(msg);
@@ -102,9 +109,11 @@ void *dispatch_routine(void* socket){
             for(size_t i = 0;i<4;i++){
                 mi_contexto->registros[i] = registros[i];
             }
-            for(size_t i = 0;i<4;i++){
+            mi_contexto->segmentos = (t_segmento*)malloc(sizeof(t_segmento*) * (cantSegmentos));
+            for(size_t i = 0;i<cantSegmentos;i++){
                 mi_contexto->segmentos[i] = segmentos[i];
             }
+            free(segmentos);
             pthread_mutex_lock(&mutex_flag);
             pid_interrupt = -1;
             flag_interrupcion = 0;
@@ -123,7 +132,7 @@ void *dispatch_routine(void* socket){
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->id),sizeof(uint32_t));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->program_counter),sizeof(uint32_t));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->registros),sizeof(uint32_t)*4);
-                agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos),sizeof(t_segmento)*4);
+                agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos),sizeof(t_segmento)*cantSegmentos);
                 enviar_paquete(paquete,socket_dispatch);
                 eliminar_paquete(paquete);
                 for(size_t i = 0; i < cantidad; i++){
@@ -136,7 +145,7 @@ void *dispatch_routine(void* socket){
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->id),sizeof(uint32_t));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->program_counter),sizeof(uint32_t));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->registros),sizeof(uint32_t)*4);
-                agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos),sizeof(t_segmento)*4);
+                agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos),sizeof(t_segmento)*cantSegmentos);
                 enviar_paquete(paquete,socket_dispatch);
                 eliminar_paquete(paquete);
                 for(size_t i = 0; i < cantidad; i++){
@@ -149,7 +158,7 @@ void *dispatch_routine(void* socket){
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->id),sizeof(uint32_t));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->program_counter),sizeof(uint32_t));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->registros),sizeof(uint32_t)*4);
-                agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos),sizeof(t_segmento)*4);
+                agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos),sizeof(t_segmento)*cantSegmentos);
                 agregar_a_paquete(paquete,(void *)(mi_contexto->dispositivo),strlen(mi_contexto->dispositivo)+1);
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->unidades),sizeof(uint32_t));
                 enviar_paquete(paquete,socket_dispatch);

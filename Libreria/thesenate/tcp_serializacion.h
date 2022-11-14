@@ -28,6 +28,7 @@ typedef enum op_code
     INIT_KERNEL,
     MMU_MARCO,
     PAGE_FAULT,
+    SEG_FAULT,
     SWAP,
 
     // KERNEL - CPU
@@ -41,7 +42,10 @@ typedef enum op_code
 
     //MEMORIA - CPU
     INIT_MEMORIA,
-    DIRECCION_FISICA
+    DIRECCION_FISICA,
+    MOV_IN_VALOR,
+    MOV_OUT_CONFIRMACION,
+    VALOR_OK
     
 }op_code;
 

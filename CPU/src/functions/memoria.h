@@ -16,5 +16,6 @@
 
 void *memoria_routine(void*);
 uint32_t recibir_uint32t(int socket);
+void realizarHandshake(int,t_log*);
 
 #endif /* MEMORIA_H_ */
