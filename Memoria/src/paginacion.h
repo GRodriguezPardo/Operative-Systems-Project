@@ -2,28 +2,17 @@
 #define PAGINACION_H_
 
 #include <commons/collections/list.h>
+#include <commons/bitarray.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include "memoria_utils.h"
-
-typedef struct tablaPaginas
-{
-    uint32_t idProceso;
-    t_list *tabla;
-} t_tablaPaginas;
-
-typedef struct pagina
-{
-    uint32_t marco,
-        presente, 
-        usado, 
-        modificado,
-        posicion_swap;
-} t_pagina;
+#include "memoria_globals.h"
 
 //Crea una tabla y devuelve su id
 uint32_t pag_crearTablaPaginas(uint32_t idProceso);
-void pag_destruirTablaPaginas(t_tablaPaginas *tabla);
+void pag_liberarTablasPaginas(uint32_t idProceso);
 int pag_obtenerMarcoPagina(uint32_t idTablaPaginas, uint32_t idPagina, uint32_t *marco);
+void pag_destruirTablaPaginas(void *tabla);
+void pag_destruirPagina(void *pag);
 
 #endif /* PAGINACION_H_ */
