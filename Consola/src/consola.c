@@ -46,7 +46,7 @@ int main(int argc, char **argv)
     agregar_a_paquete(paquete_inicial, (void *)&cantidad_segmentos, sizeof(uint32_t));
     for (size_t i = 0; i < cantidad_segmentos; i++)
     {
-        agregar_a_paquete(paquete_inicial, (void *)segmentos[i], sizeof(uint32_t));
+        agregar_a_paquete(paquete_inicial, (void *)&(segmentos[i]), sizeof(uint32_t));
     }
     free(segmentos);
 

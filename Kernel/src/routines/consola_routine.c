@@ -45,18 +45,26 @@ void *consola_routine(void *param)
     }
 
     ////////////// RECIBIENDO SEGMENTOS //////////////
-    uint32_t segmentos[4];
+    uint32_t  cant_segmentos;
+    t_segmento_pcb* segmentos;
+    
+
     {
         void *msg = NULL;
+        msg = recibir(socket_cliente);
+        cant_segmentos = *(uint32_t *)msg;
+        free(msg);
 
-        for (size_t i = 0; i < 4; i++)
+        segmentos = (t_segmento_pcb*)malloc(sizeof(t_segmento_pcb)*cant_segmentos);
+        for (size_t i = 0; i < cant_segmentos; i++)
         {
             msg = recibir(socket_cliente);
-            segmentos[i] = *((uint32_t *)msg);
+            segmentos[i].tamanio = *((uint32_t *)msg);
+            segmentos[i].identificador_tabla = 0;
             free(msg);
             msg = NULL;
         }
-        tamanio_restante -= 32;
+        tamanio_restante -= (cant_segmentos + 1) * 8;
     }
 
     ////////////// RECIBIENDO INSTRUCCIONES //////////////
@@ -89,11 +97,8 @@ void *consola_routine(void *param)
         mi_pcb->pipeline.operacion = 0;
         mi_pcb->pipeline.valor = 0;
 
-        for (size_t i = 0; i < 4; i++)
-        {
-            mi_pcb->segmentos[i].tamanio = segmentos[i];
-            mi_pcb->segmentos[i].identificador_tabla = 0;
-        }
+        mi_pcb->cant_segmentos = cant_segmentos;
+        mi_pcb->segmentos = segmentos; 
     }
 
     ////////////// ENTRANDO EN COLA DEL PLANIFICADOR DE LARGO PLAZO //////////////
@@ -169,7 +174,7 @@ void *consola_routine(void *param)
                 paquete = crear_paquete(EXIT);
                 enviar_paquete(paquete, socket_cliente);
                 eliminar_paquete(paquete);
-                
+
                 log_destroy(logger);
                 return NULL;
             default:
@@ -180,6 +185,6 @@ void *consola_routine(void *param)
             }
         }
     }
-    
+
     return NULL;
 }

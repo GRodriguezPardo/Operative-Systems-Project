@@ -71,7 +71,8 @@ typedef struct t_pcb
     uint32_t cant_instrucciones;
     uint32_t program_counter;
     uint32_t registros[4];
-    t_segmento_pcb segmentos[4];
+    uint32_t cant_segmentos;
+    t_segmento_pcb* segmentos;
     sem_t console_semaphore;
     sem_t console_waiter_semaphore;
     t_pipeline pipeline;
