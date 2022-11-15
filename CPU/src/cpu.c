@@ -24,7 +24,7 @@ int main(){
     config = config_create("../cpu.config");
     printf("%s\n", config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT"));
     t_log *logger = log_create("../cpu.log", "CPU - Main", 0, LOG_LEVEL_INFO);
-    init_globals_cpu();
+    init_globals_cpu(config);
     pthread_t interrupt, dispatch, executer, memoria;
     if (pthread_create(&interrupt, NULL, interrupt_server, (void *) config) < 0)
     {
