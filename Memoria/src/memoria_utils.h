@@ -18,4 +18,6 @@ void recibir_handshake(int socket, op_code codigo);
 void aplicar_retardo(uint32_t tiempo_ms);
 uint32_t recibir_uint32t(int socket);
 
+t_list *get_tablas_proceso(uint32_t idProceso);
+
 #endif //MEMORIA_UTILS_H_

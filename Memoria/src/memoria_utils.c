@@ -42,3 +42,13 @@ uint32_t recibir_uint32t(int socket){
     free(buffer);
     return valor;
 }
+
+t_list *get_tablas_proceso(uint32_t _idProceso){
+    t_list *lista;
+    bool _esTablaDelProceso(void *item){
+        t_tablaPaginas *tabla = (t_tablaPaginas *)item;
+        return tabla->idProceso == _idProceso;
+    }
+    lista = list_filter(espacioTablasPag, _esTablaDelProceso);
+    return lista;
+}

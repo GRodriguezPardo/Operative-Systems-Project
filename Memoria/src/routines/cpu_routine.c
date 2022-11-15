@@ -1,13 +1,7 @@
 #include "cpu_routine.h"
-#include <commons/collections/queue.h>
-
-static void responder_handshakeCPU(int socket);
-uint32_t leer_memoria(uint32_t direccionFisica);
-void escribir_memoria(uint32_t direccionFisica, uint32_t valor);
-void responder_cpu(int socket, op_code code, uint32_t valor);
 
 void cpu_routine(int socketFd, int *returnStatus){
-    uint32_t valorRespuesta = 0;
+    uint32_t valorRespuesta = NULL;
     op_code codRespuesta;
     uint32_t direccionFisica;
 
@@ -16,34 +10,45 @@ void cpu_routine(int socketFd, int *returnStatus){
 
     while(1){
         op_code codPeticion = recibir_operacion(socketFd);
-        codRespuesta = codPeticion;
-        int __attribute__((unused)) tamanio = largo_paquete(socketFd);
+        int __attribute_maybe_unused__ tamanio = largo_paquete(socketFd);
+        uint32_t pid = recibir_uint32t(socketFd);
 
         aplicar_retardo(configMemoria.retardoMemoria);
         switch (codPeticion)
         {
         /* QUE PASA SI MMU SACA LA DIRECCION FISICA DIRECTAMENTE DESDE TLB Y ESE MARCO FUE REEMPLAZADO */
         case MOV_IN:
+            codRespuesta = MOV_IN_VALOR;
             direccionFisica = recibir_uint32t(socketFd); //recibo la direccion
             valorRespuesta = leer_memoria(direccionFisica);
+            //LOGUEAR
             break;
         case MOV_OUT:
+            codRespuesta = MOV_OUT_CONFIRMACION;
             direccionFisica = recibir_uint32t(socketFd); //recibo la direccion
             uint32_t valorAEscribir = recibir_uint32t(socketFd); //recibo el valor a escribir
             escribir_memoria(direccionFisica, valorAEscribir);
+            //LOGUEAR
             break;
         case MMU_MARCO:
-            uint32_t idTabla = recibir_uint32t(socketFd);
+            codRespuesta = MMU_MARCO;
             uint32_t numPagina = recibir_uint32t(socketFd);
+            uint32_t idTabla = recibir_uint32t(socketFd);
             uint32_t marco;
 
             if (pag_obtenerMarcoPagina(idTabla, numPagina, &marco) == -1){
                 codRespuesta = PAGE_FAULT;
-                /* GUARDAR TABLA Y PAGINA PARA QUE HILO KERNEL PUEDA HACER EL SWAP MAS ADELANTE */
+                //AGREGO LA INFO DE LA PAGINA PARA BUSCARLA CUANDO KERNEL PIDA EL SWAP
+                t_pagina_page_fault *pagPF = (t_pagina_page_fault *) malloc(sizeof(t_pagina_page_fault));
+                pagPF->idProceso = pid;
+                pagPF->idTabla = idTabla;
+                pagPF->numPagina = numPagina;
+                insertar_pagina_pageFault(listaPageFaults, pagPF);
             }
             else 
                 valorRespuesta = marco;
-
+            
+            //LOGUEAR
             break;
         default:
             *returnStatus = EXIT_FAILURE;
@@ -62,7 +67,7 @@ void cpu_routine(int socketFd, int *returnStatus){
 
 static void responder_handshakeCPU(int socket){
     //mandar entradasXtablaPaginas y tamanioPagina
-    t_paquete *pack = crear_paquete(INIT_CPU);
+    t_paquete *pack = crear_paquete(INIT_MEMORIA);
     agregar_a_paquete(pack, (void *)&(configMemoria.entradasPorTabla), sizeof(configMemoria.entradasPorTabla));
     agregar_a_paquete(pack, (void *)&(configMemoria.tamanioPagina), sizeof(configMemoria.tamanioPagina));
     enviar_paquete(pack, socket);
@@ -74,11 +79,11 @@ static void responder_handshakeCPU(int socket){
 }
 
 uint32_t leer_memoria(uint32_t offset){
-    uint32_t valor;
+    uint32_t valorLeido;
     pthread_mutex_lock(&mx_espacioUsuario);
-    valor = *(uint32_t *)(espacioUsuario + offset);
+    valorLeido = *(uint32_t *)(espacioUsuario + offset);
     pthread_mutex_unlock(&mx_espacioUsuario);
-    return valor;
+    return valorLeido;
 }
 
 void escribir_memoria(uint32_t offset, uint32_t valor){
@@ -87,9 +92,17 @@ void escribir_memoria(uint32_t offset, uint32_t valor){
     pthread_mutex_unlock(&mx_espacioUsuario);
 }
 
+void insertar_pagina_pageFault(t_list *listaPageFaults, t_pagina_page_fault *pagPF){
+    pthread_mutex_lock(&mx_listaPageFaults);
+    list_add(listaPageFaults, pagPF);
+    pthread_mutex_unlock(&mx_listaPageFaults);
+}
+
 void responder_cpu(int socket, op_code code, uint32_t valor){
     t_paquete *pack = crear_paquete(code);
-    agregar_a_paquete(pack, (void *)&valor, sizeof(valor));
+    if(valor != NULL)
+        agregar_a_paquete(pack, (void *)&valor, sizeof(valor));
+
     enviar_paquete(pack, socket);
     eliminar_paquete(pack);
 }

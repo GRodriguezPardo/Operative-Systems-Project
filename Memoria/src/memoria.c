@@ -1,8 +1,4 @@
 #include "memoria.h"
-#include <string.h>
-#include <math.h>
-
-static void liberar_espacioKernel();
 
 int main(int argc, char** argv){
     logger = log_create("../memoria.log", "Memoria - Main", 1, LOG_LEVEL_INFO);
@@ -22,12 +18,10 @@ int main(int argc, char** argv){
     loggear_info(logger, "Configuración memoria cargada.");
 
     // Inicializando espacio de datos y de Kernel
-    espacioUsuario = malloc(configMemoria.tamanioMemoria); //espacio de usuario
-    pthread_mutex_init(&mx_espacioUsuario, NULL);
-    loggear_info(logger, "Espacio memoria inicializado.");
-    espacioTablasPag = list_create(); //estructura para las tablas de páginas
-    pthread_mutex_init(&mx_espacioTablasPag, NULL);
-    loggear_info(logger, "Espacio Kernel inicializado.");
+    inicializar_espacio_usuario();
+    inicializar_espacio_tablas();
+    inicializar_lista_pageFaults();
+    inicializar_mapa_frames();
 
     swap_inicializar();
     loggear_info(logger, "Espacio SWAP inicializado.");
@@ -83,23 +77,68 @@ void cargar_configuracion_memoria(){
     configMemoria.retardoSwap = (uint32_t)config_get_int_value(config, "RETARDO_SWAP");
     configMemoria.pathSwap = config_get_string_value(config, "PATH_SWAP");
     configMemoria.tamanioSwap = (uint32_t)config_get_int_value(config, "TAMANIO_SWAP");
+
+    configMemoria.marcosEnMemoria = configMemoria.tamanioMemoria / configMemoria.tamanioPagina;
 }
 
 void finalizar_memoria(){
     free(espacioUsuario);
-    liberar_espacioKernel();
     swap_cerrar();
-
-    config_destroy(config);  
-    pthread_mutex_destroy(&mx_main);
+    destruir_espacio_tablas();
+    destruir_lista_pageFaults();
+    destruir_mapa_frames();
+    config_destroy(config);
 
     loggear_info(logger, "Módulo memoria finalizado.");
-    pthread_mutex_destroy(&mx_logger);
     log_destroy(logger);
+    cerrarMutexes();
 }
 
-/// @brief Libera el espacio de tablas de páginas.
-static void liberar_espacioKernel(){
+/* FUNCIONES PRIVADAS */
+
+void inicializar_espacio_usuario(){
+    espacioUsuario = malloc(configMemoria.tamanioMemoria); //espacio de usuario
+    pthread_mutex_init(&mx_espacioUsuario, NULL);
+    loggear_info(logger, "Espacio memoria inicializado.");
+}
+
+void inicializar_espacio_tablas(){
+    espacioTablasPag = list_create(); //estructura para las tablas de páginas
+    pthread_mutex_init(&mx_espacioTablasPag, NULL);
+    loggear_info(logger, "Espacio Kernel inicializado.");
+}
+
+void inicializar_lista_pageFaults(){
+    listaPageFaults = list_create();
+    pthread_mutex_init(&mx_listaPageFaults, NULL);
+    loggear_info(logger, "Lista Page Faults inicializada.");
+}
+
+void inicializar_mapa_frames(){
+    int tamTabla_bytes = configMemoria.marcosEnMemoria / 8;
+    if((configMemoria.marcosEnMemoria % 8) != 0)
+        tamTabla_bytes++; //si queda un resto, agrego un byte extra
+
+    void* puntero_a_bits = malloc(tamTabla_bytes);
+    mapaFrames = bitarray_create_with_mode(puntero_a_bits, tamTabla_bytes, LSB_FIRST);
+}
+
+void destruir_espacio_tablas(){
     list_destroy_and_destroy_elements(espacioTablasPag, &pag_destruirTablaPaginas);
+}
+
+void destruir_lista_pageFaults(){
+    list_destroy_and_destroy_elements(listaPageFaults, &pag_destruirPagina);
+}
+
+void destruir_mapa_frames(){
+    bitarray_destroy(mapaFrames);
+}
+
+void cerrarMutexes(){
+    pthread_mutex_destroy(&mx_espacioUsuario);
     pthread_mutex_destroy(&mx_espacioTablasPag);
+    pthread_mutex_destroy(&mx_listaPageFaults);
+    pthread_mutex_destroy(&mx_main);
+    pthread_mutex_destroy(&mx_logger);
 }

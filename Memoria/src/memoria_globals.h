@@ -1,8 +1,10 @@
 #ifndef MEMORIA_GLOBALS_H_
 #define MEMORIA_GLOBALS_H_
 
+#include <commons/bitarray.h>
 #include <commons/config.h>
 #include <commons/collections/list.h>
+#include <commons/collections/queue.h>
 #include <commons/log.h>
 #include <thesenate/tcp_client.h>
 #include <thesenate/tcp_server.h>
@@ -21,13 +23,35 @@ typedef struct mem_config
         retardoMemoria,
         marcosPorProceso,
         retardoSwap,
-        tamanioSwap;
+        tamanioSwap,
+        marcosEnMemoria;
 } t_memoria_config;
 
 typedef struct t_segmento_pcb {
     uint32_t tamanio;
     uint32_t identificador_tabla;
 } t_segmento_pcb;
+
+typedef struct tablaPaginas
+{
+    uint32_t idProceso;
+    t_list *tabla;
+} t_tablaPaginas;
+
+typedef struct pagina
+{
+    uint32_t marco,
+        presente, 
+        usado, 
+        modificado,
+        posicion_swap;
+} t_pagina;
+
+typedef struct pagina_page_fault {
+    uint32_t idProceso;
+    uint32_t idTabla;
+    uint32_t numPagina;
+} t_pagina_page_fault;
 
 //////// ESTRUCTURAS GLOBALES /////////
 extern t_config *config;
@@ -37,9 +61,11 @@ extern pthread_mutex_t mx_logger;
 extern pthread_mutex_t mx_main;
 extern pthread_mutex_t mx_espacioUsuario;
 extern pthread_mutex_t mx_espacioTablasPag;
+extern pthread_mutex_t mx_listaPageFaults;
 extern void *espacioUsuario;
 extern t_list *espacioTablasPag;
-extern t_list *tablaFrames;
+extern t_bitarray *mapaFrames;
+extern t_list *listaPageFaults;
 extern int swapFd;
 
 //////// PUNTEROS A FUNCIONES /////////
