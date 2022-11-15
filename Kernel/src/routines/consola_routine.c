@@ -59,6 +59,7 @@ void *consola_routine(void *param)
         for (size_t i = 0; i < cant_segmentos; i++)
         {
             msg = recibir(socket_cliente);
+            segmentos[i].nro_segmento = i;
             segmentos[i].tamanio = *((uint32_t *)msg);
             segmentos[i].identificador_tabla = 0;
             free(msg);

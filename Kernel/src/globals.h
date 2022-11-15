@@ -55,6 +55,7 @@ extern pthread_mutex_t mutex_cola_new;
 
 ////////////// DEFINICION DEL PCB //////////////
 typedef struct t_segmento_pcb {
+    uint32_t nro_segmento;
     uint32_t tamanio;
     uint32_t identificador_tabla;
 } t_segmento_pcb;

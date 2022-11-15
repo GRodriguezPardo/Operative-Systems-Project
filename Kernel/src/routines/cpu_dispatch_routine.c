@@ -119,7 +119,8 @@ void give_cpu_next_pcb(int socket)
         agregar_a_paquete(paquete, (void *)&(unPcb->id), sizeof(uint32_t));
         agregar_a_paquete(paquete, (void *)&(unPcb->program_counter), sizeof(uint32_t));
         agregar_a_paquete(paquete, (void *)&(unPcb->registros), sizeof(uint32_t) * 4);
-        agregar_a_paquete(paquete, (void *)&(unPcb->segmentos), sizeof(t_segmento_pcb) * 4);
+        agregar_a_paquete(paquete, (void *)&(unPcb->cant_segmentos), sizeof(uint32_t));
+        agregar_a_paquete(paquete, (void *)(unPcb->segmentos), sizeof(t_segmento_pcb) * (unPcb->cant_segmentos));
         agregar_a_paquete(paquete, (void *)&(unPcb->cant_instrucciones), sizeof(uint32_t));
 
         for (size_t i = 0; i < unPcb->cant_instrucciones; i++)
@@ -127,7 +128,6 @@ void give_cpu_next_pcb(int socket)
             agregar_a_paquete(paquete, (void *)(unPcb->instrucciones[i]), strlen(unPcb->instrucciones[i]) + 1);
         }
     }
-
     
     {   ////////////// ENVIANDO PAQUETE Y LIMPIANDO //////////////
         enviar_paquete(paquete, socket);
@@ -165,7 +165,6 @@ t_pcb *obtener_y_actualizar_pcb_recibido(int socket)
             unPcb->program_counter = *pc;
             free(pc);
         }
-
         
         {   /////// ACTUALIZANDO REGISTROS ///////
             uint32_t *regs;
@@ -176,12 +175,11 @@ t_pcb *obtener_y_actualizar_pcb_recibido(int socket)
             }
             free(regs);
         }
-
         
         {   /////// ACTUALIZANDO SEGMENTOS ///////
             t_segmento_pcb *segmentos = NULL;
             segmentos = (t_segmento_pcb *)recibir(socket);
-            for (size_t i = 0; i < 4; i++)
+            for (size_t i = 0; i < (unPcb->cant_segmentos); i++)
             {
                 unPcb->segmentos[i] = segmentos[i];
             }
