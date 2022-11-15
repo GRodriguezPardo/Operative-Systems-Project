@@ -17,8 +17,24 @@ int main(int argc, char **argv)
 
     char *PUERTO_KERNEL = config_get_string_value(config, "PUERTO_KERNEL");
     char *IP_KERNEL = config_get_string_value(config, "IP_KERNEL");
-    char **segmentos = config_get_array_value(config, "SEGMENTOS");
     int retardo_pantalla = config_get_int_value(config, "TIEMPO_PANTALLA");
+    char **segmentos_str = config_get_array_value(config, "SEGMENTOS");
+
+    uint32_t cantidad_segmentos = 0;
+    uint32_t *segmentos;
+
+    for (
+        char *aux = segmentos_str[0];
+        aux != NULL;
+        aux = segmentos_str[++cantidad_segmentos])
+        ;
+
+    segmentos = (uint32_t *)malloc(sizeof(uint32_t) * cantidad_segmentos);
+
+    for (size_t i = 0; i < cantidad_segmentos; i++)
+    {
+        segmentos[i] = atoi(segmentos_str[i]);
+    }
 
     ////////////// TCP CLIENT //////////////
     int socket = crear_conexion(IP_KERNEL, PUERTO_KERNEL);
@@ -27,15 +43,12 @@ int main(int argc, char **argv)
     t_paquete *paquete_inicial = crear_paquete(NUEVO_PROCESO);
 
     ////////////// EMPAQUETADO SEGMENTOS //////////////
-    uint32_t *tamanio_segmento = (uint32_t *)calloc(1, sizeof(uint32_t));
-    for (size_t i = 0; i < 4; i++)
+    agregar_a_paquete(paquete_inicial, (void *)&cantidad_segmentos, sizeof(uint32_t));
+    for (size_t i = 0; i < cantidad_segmentos; i++)
     {
-        *tamanio_segmento = (uint32_t)strtoul(segmentos[i], NULL, 10);
-        agregar_a_paquete(paquete_inicial, (void *)tamanio_segmento, sizeof(uint32_t));
-        free(segmentos[i]);
+        agregar_a_paquete(paquete_inicial, (void *)segmentos[i], sizeof(uint32_t));
     }
     free(segmentos);
-    free(tamanio_segmento);
 
     ////////////// ARCHIVO INSTRUCCIONES Y EMPAQUETADO //////////////
     FILE *archivo = fopen(argv[2], "r"); // abrir archivo en argv 2
@@ -63,7 +76,7 @@ int main(int argc, char **argv)
     op_code codigo_operacion;
     int __attribute__((unused)) tamaño_paquete;
     char *auxInput = NULL;
-    uint32_t *input = (uint32_t*)malloc(sizeof(uint32_t)), *output = NULL;
+    uint32_t *input = (uint32_t *)malloc(sizeof(uint32_t)), *output = NULL;
     t_paquete *paquete = NULL;
 
     codigo_operacion = recibir_operacion(socket);
@@ -87,7 +100,7 @@ int main(int argc, char **argv)
             auxInput = NULL;
             break;
         case CONSOLE_OUTPUT:
-            output = (uint32_t*)recibir(socket);
+            output = (uint32_t *)recibir(socket);
             printf("%u\n", *output);
             free(output);
             output = NULL;
