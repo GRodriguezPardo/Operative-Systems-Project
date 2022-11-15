@@ -21,7 +21,7 @@ int main(int argc, char** argv){
     inicializar_espacio_usuario();
     inicializar_espacio_tablas();
     inicializar_lista_pageFaults();
-    inicializar_mapa_frames();
+    inicializar_mapas();
 
     swap_inicializar();
     loggear_info(logger, "Espacio SWAP inicializado.");
@@ -43,7 +43,7 @@ int main(int argc, char** argv){
 
 void *levantar_server_memoria(void * config){
     int *return_status = (int*)calloc(1, sizeof(int));
-    iniciar_servidor(configMemoria.ip, configMemoria.puerto, atender_conexion);
+    iniciar_servidor(ConfigMemoria.ip, ConfigMemoria.puerto, atender_conexion);
     pthread_exit(return_status);
 }
 
@@ -66,27 +66,28 @@ void *atender_conexion(void *arg){
 }
 
 void cargar_configuracion_memoria(){
-    configMemoria.ip = config_get_string_value(config,"IP_MEMORIA");
-    configMemoria.puerto = config_get_string_value(config, "PUERTO_ESCUCHA");
-    configMemoria.tamanioMemoria = (uint32_t)config_get_int_value(config, "TAM_MEMORIA");
-    configMemoria.tamanioPagina = (uint32_t)config_get_int_value(config, "TAM_PAGINA");
-    configMemoria.entradasPorTabla = (uint32_t)config_get_int_value(config, "ENTRADAS_POR_TABLA");
-    configMemoria.retardoMemoria = (uint32_t)config_get_int_value(config, "RETARDO_MEMORIA");
-    configMemoria.algoritmoReemplazo = config_get_string_value(config, "ALGORITMO_REEMPLAZO");
-    configMemoria.marcosPorProceso = (uint32_t)config_get_int_value(config, "MARCOS_POR_PROCESO");
-    configMemoria.retardoSwap = (uint32_t)config_get_int_value(config, "RETARDO_SWAP");
-    configMemoria.pathSwap = config_get_string_value(config, "PATH_SWAP");
-    configMemoria.tamanioSwap = (uint32_t)config_get_int_value(config, "TAMANIO_SWAP");
+    ConfigMemoria.ip = config_get_string_value(config,"IP_MEMORIA");
+    ConfigMemoria.puerto = config_get_string_value(config, "PUERTO_ESCUCHA");
+    ConfigMemoria.tamanioMemoria = (uint32_t)config_get_int_value(config, "TAM_MEMORIA");
+    ConfigMemoria.tamanioPagina = (uint32_t)config_get_int_value(config, "TAM_PAGINA");
+    ConfigMemoria.paginasPorTabla = (uint32_t)config_get_int_value(config, "ENTRADAS_POR_TABLA");
+    ConfigMemoria.retardoMemoria = (uint32_t)config_get_int_value(config, "RETARDO_MEMORIA");
+    ConfigMemoria.algoritmoReemplazo = config_get_string_value(config, "ALGORITMO_REEMPLAZO");
+    ConfigMemoria.marcosPorProceso = (uint32_t)config_get_int_value(config, "MARCOS_POR_PROCESO");
+    ConfigMemoria.retardoSwap = (uint32_t)config_get_int_value(config, "RETARDO_SWAP");
+    ConfigMemoria.pathSwap = config_get_string_value(config, "PATH_SWAP");
+    ConfigMemoria.tamanioSwap = (uint32_t)config_get_int_value(config, "TAMANIO_SWAP");
 
-    configMemoria.marcosEnMemoria = configMemoria.tamanioMemoria / configMemoria.tamanioPagina;
+    ConfigMemoria.cantidadMarcosMemoria = ConfigMemoria.tamanioMemoria / ConfigMemoria.tamanioPagina;
+    ConfigMemoria.cantidadPaginasSwap = ConfigMemoria.tamanioSwap / ConfigMemoria.tamanioPagina;
 }
 
 void finalizar_memoria(){
-    free(espacioUsuario);
+    free(EspacioUsuario);
     swap_cerrar();
     destruir_espacio_tablas();
     destruir_lista_pageFaults();
-    destruir_mapa_frames();
+    destruir_mapas();
     config_destroy(config);
 
     loggear_info(logger, "Módulo memoria finalizado.");
@@ -97,42 +98,52 @@ void finalizar_memoria(){
 /* FUNCIONES PRIVADAS */
 
 void inicializar_espacio_usuario(){
-    espacioUsuario = malloc(configMemoria.tamanioMemoria); //espacio de usuario
+    EspacioUsuario = malloc(ConfigMemoria.tamanioMemoria); //espacio de usuario
     pthread_mutex_init(&mx_espacioUsuario, NULL);
     loggear_info(logger, "Espacio memoria inicializado.");
 }
 
 void inicializar_espacio_tablas(){
-    espacioTablasPag = list_create(); //estructura para las tablas de páginas
+    EspacioTablasPag = list_create(); //estructura para las tablas de páginas
     pthread_mutex_init(&mx_espacioTablasPag, NULL);
     loggear_info(logger, "Espacio Kernel inicializado.");
 }
 
 void inicializar_lista_pageFaults(){
-    listaPageFaults = list_create();
+    ListaPageFaults = list_create();
     pthread_mutex_init(&mx_listaPageFaults, NULL);
     loggear_info(logger, "Lista Page Faults inicializada.");
 }
 
-void inicializar_mapa_frames(){
-    int tamTabla_bytes = configMemoria.marcosEnMemoria / 8;
-    if((configMemoria.marcosEnMemoria % 8) != 0)
-        tamTabla_bytes++; //si queda un resto, agrego un byte extra
+void inicializar_mapas(){
+    int tamBitmap_bytes = ConfigMemoria.cantidadMarcosMemoria / 8;
+    if((ConfigMemoria.cantidadMarcosMemoria % 8) != 0)
+        tamBitmap_bytes++; //si queda un resto, agrego un byte extra
 
-    void* puntero_a_bits = malloc(tamTabla_bytes);
-    mapaFrames = bitarray_create_with_mode(puntero_a_bits, tamTabla_bytes, LSB_FIRST);
+    void* puntero_a_bits = malloc(tamBitmap_bytes);
+    MapaFrames = bitarray_create_with_mode(puntero_a_bits, tamBitmap_bytes, LSB_FIRST);
+
+    //--------
+
+    tamBitmap_bytes = ConfigMemoria.cantidadPaginasSwap / 8;
+    if((ConfigMemoria.cantidadPaginasSwap % 8) != 0)
+        tamBitmap_bytes++; //si queda un resto, agrego un byte extra
+
+    puntero_a_bits = malloc(tamBitmap_bytes);
+    MapaSwap = bitarray_create_with_mode(puntero_a_bits, tamBitmap_bytes, LSB_FIRST);
 }
 
 void destruir_espacio_tablas(){
-    list_destroy_and_destroy_elements(espacioTablasPag, &pag_destruirTablaPaginas);
+    list_destroy_and_destroy_elements(EspacioTablasPag, &pag_destruirTablaPaginas);
 }
 
 void destruir_lista_pageFaults(){
-    list_destroy_and_destroy_elements(listaPageFaults, &pag_destruirPagina);
+    list_destroy_and_destroy_elements(ListaPageFaults, &pag_destruirPagina);
 }
 
-void destruir_mapa_frames(){
-    bitarray_destroy(mapaFrames);
+void destruir_mapas(){
+    bitarray_destroy(MapaFrames);
+    bitarray_destroy(MapaSwap);
 }
 
 void cerrarMutexes(){

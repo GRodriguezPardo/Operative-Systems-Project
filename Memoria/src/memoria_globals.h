@@ -6,6 +6,7 @@
 #include <commons/collections/list.h>
 #include <commons/collections/queue.h>
 #include <commons/log.h>
+#include <stdlib.h>
 #include <thesenate/tcp_client.h>
 #include <thesenate/tcp_server.h>
 #include <thesenate/tcp_serializacion.h>
@@ -19,12 +20,13 @@ typedef struct mem_config
         *pathSwap;
     uint32_t tamanioMemoria, 
         tamanioPagina, 
-        entradasPorTabla, 
+        paginasPorTabla, 
         retardoMemoria,
         marcosPorProceso,
         retardoSwap,
         tamanioSwap,
-        marcosEnMemoria;
+        cantidadMarcosMemoria,
+        cantidadPaginasSwap;
 } t_memoria_config;
 
 typedef struct t_segmento_pcb {
@@ -56,19 +58,17 @@ typedef struct pagina_page_fault {
 //////// ESTRUCTURAS GLOBALES /////////
 extern t_config *config;
 extern t_log *logger;
-extern t_memoria_config configMemoria;
+extern t_memoria_config ConfigMemoria;
 extern pthread_mutex_t mx_logger;
 extern pthread_mutex_t mx_main;
 extern pthread_mutex_t mx_espacioUsuario;
 extern pthread_mutex_t mx_espacioTablasPag;
 extern pthread_mutex_t mx_listaPageFaults;
-extern void *espacioUsuario;
-extern t_list *espacioTablasPag;
-extern t_bitarray *mapaFrames;
-extern t_list *listaPageFaults;
-extern int swapFd;
-
-//////// PUNTEROS A FUNCIONES /////////
-extern void (*reemplazarPagina)();
+extern void *EspacioUsuario;
+extern t_list *EspacioTablasPag;
+extern t_bitarray *MapaFrames;
+extern t_bitarray *MapaSwap;
+extern t_list *ListaPageFaults;
+extern int swapFile;
 
 #endif /* MEMORIA_GLOBALS_H_ */
