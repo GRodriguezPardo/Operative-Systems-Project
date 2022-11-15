@@ -78,11 +78,7 @@ void *dispatch_routine(void* socket){
         free(msg);
         msg = NULL;
         msg = recibir(socket_dispatch);
-        segmentos = (t_segmento*)malloc(sizeof(t_segmento*) * (cantSegmentos));
-        for(size_t i = 0;i<cantSegmentos;i++){
-            segmentos[i] = ((t_segmento *)msg)[i];
-        }
-        free(msg);
+        segmentos = (t_segmento*)msg;
         msg = NULL;
         ////////////// Recibiendo Instrucciones//////////////
         msg = recibir(socket_dispatch);
@@ -109,11 +105,7 @@ void *dispatch_routine(void* socket){
             for(size_t i = 0;i<4;i++){
                 mi_contexto->registros[i] = registros[i];
             }
-            mi_contexto->segmentos = (t_segmento*)malloc(sizeof(t_segmento*) * (cantSegmentos));
-            for(size_t i = 0;i<cantSegmentos;i++){
-                mi_contexto->segmentos[i] = segmentos[i];
-            }
-            free(segmentos);
+            mi_contexto->segmentos = segmentos;
             pthread_mutex_lock(&mutex_flag);
             pid_interrupt = -1;
             flag_interrupcion = 0;
@@ -132,33 +124,35 @@ void *dispatch_routine(void* socket){
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->id),sizeof(uint32_t));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->program_counter),sizeof(uint32_t));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->registros),sizeof(uint32_t)*4);
-                agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos),sizeof(t_segmento)*cantSegmentos);
+                agregar_a_paquete(paquete,(void *)(mi_contexto->segmentos),sizeof(t_segmento)*cantSegmentos);
                 enviar_paquete(paquete,socket_dispatch);
                 eliminar_paquete(paquete);
                 for(size_t i = 0; i < cantidad; i++){
                     free(instrucciones[i]);
                 }
                 free(instrucciones);
+                free(segmentos);
                 break;
             case EXIT_PROCESO:
                 paquete = crear_paquete(mi_contexto -> pipeline.operacion);
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->id),sizeof(uint32_t));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->program_counter),sizeof(uint32_t));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->registros),sizeof(uint32_t)*4);
-                agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos),sizeof(t_segmento)*cantSegmentos);
+                agregar_a_paquete(paquete,(void *)(mi_contexto->segmentos),sizeof(t_segmento)*cantSegmentos);
                 enviar_paquete(paquete,socket_dispatch);
                 eliminar_paquete(paquete);
                 for(size_t i = 0; i < cantidad; i++){
                     free(instrucciones[i]);
                 }
                 free(instrucciones);
+                free(segmentos);
                 break;
             case BLOQUEO_PROCESO:
                 paquete = crear_paquete(mi_contexto -> pipeline.operacion);
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->id),sizeof(uint32_t));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->program_counter),sizeof(uint32_t));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->registros),sizeof(uint32_t)*4);
-                agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos),sizeof(t_segmento)*cantSegmentos);
+                agregar_a_paquete(paquete,(void *)(mi_contexto->segmentos),sizeof(t_segmento)*cantSegmentos);
                 agregar_a_paquete(paquete,(void *)(mi_contexto->dispositivo),strlen(mi_contexto->dispositivo)+1);
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->unidades),sizeof(uint32_t));
                 enviar_paquete(paquete,socket_dispatch);
@@ -167,6 +161,7 @@ void *dispatch_routine(void* socket){
                     free(instrucciones[i]);
                 }
                 free(instrucciones);
+                free(segmentos);
                 break;
             default:
                 pthread_mutex_lock(&mutex_logger);
