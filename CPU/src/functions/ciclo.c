@@ -88,10 +88,12 @@ void execute(t_auxCiclo* auxCiclo){
             operacion = traducciones(operacion);
             switch(operacion){
                 case SEG_FAULT:
-                // flag_segFault = 1
+                 flag_segFault = 1;
+                 mi_contexto->pipeline.operacion = SEG_FAULT;
                 break;
                 case PAGE_FAULT:
-                // flag_pageFault = 1
+                 flag_pageFault = 1;
+                 mi_contexto->pipeline.operacion = PAGE_FAULT;
                 break;
                 case VALOR_OK:
                  mi_contexto->registros[auxCiclo->register1] = configMemoria->pipelineMemoria.valor;
@@ -107,10 +109,12 @@ void execute(t_auxCiclo* auxCiclo){
             operacion = traducciones(operacion);
             switch(operacion){
                 case SEG_FAULT:
-                // flag_segFault = 1
+                 flag_segFault = 1;
+                 mi_contexto->pipeline.operacion = SEG_FAULT;
                 break;
                 case PAGE_FAULT:
-                // flag_pageFault = 1
+                 flag_pageFault = 1;
+                 mi_contexto->pipeline.operacion = PAGE_FAULT;
                 break;
                 case VALOR_OK:
                 break;
@@ -191,21 +195,29 @@ void* ciclo_instruccion(void* config){
                 // chequear que no hubo seg o page fault
                 // si hubo mando las cosas con el op_code 
             }
-        mi_contexto->program_counter++;
+            if(flag_segFault != 1 && flag_pageFault != 1){
+                mi_contexto->program_counter++;
 
-        pthread_mutex_lock(&mutex_logger);
-        log_info(logger_cpu_ciclo,"PID:%d - Ejecutando: %s - %s - %s",mi_contexto->id,auxCiclo->op,auxCiclo->oper1,auxCiclo->oper2);
-        pthread_mutex_unlock(&mutex_logger);
+                pthread_mutex_lock(&mutex_logger);
+                log_info(logger_cpu_ciclo,"PID:%d - Ejecutando: %s - %s - %s",mi_contexto->id,auxCiclo->op,auxCiclo->oper1,auxCiclo->oper2);
+                pthread_mutex_unlock(&mutex_logger);
 
-        ////////////// CHECK INTERRUPT //////////////
-        {
-            check_interrupt();
-        }
-        if(devolverContexto){
-            devolverContexto = false;
-            sem_post(&sem_envio_contexto);
-            sem_wait(&sem_ciclo_instruccion);
-        }
+                ////////////// CHECK INTERRUPT //////////////
+                {
+                    check_interrupt();
+                }
+                if(devolverContexto){
+                    devolverContexto = false;
+                    sem_post(&sem_envio_contexto);
+                    sem_wait(&sem_ciclo_instruccion);
+                }
+            }else{
+                flag_pageFault = 0;
+                flag_segFault = 0;
+                sem_post(&sem_envio_contexto);
+                sem_wait(&sem_ciclo_instruccion);
+            }
+        
         
     }
     

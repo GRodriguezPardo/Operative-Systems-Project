@@ -10,6 +10,7 @@ void *memoria_routine(void *config){
         sprintf(buffer, "Cpu - Memoria Routine");
         loggerMemoria = log_create("../cpu.log", buffer, 0, LOG_LEVEL_INFO);
     }
+    char* msgLog;
 
     char* ip = config_get_string_value(config, "IP_MEMORIA");
     char* puerto = config_get_string_value(config, "PUERTO_MEMORIA");
@@ -27,12 +28,14 @@ void *memoria_routine(void *config){
         sem_wait(&sem_conexion_memoria);
         switch (configMemoria->pipelineMemoria.operacion){
         case MOV_IN:
+         msgLog = "LEER";
          paquete = crear_paquete(MOV_IN);
          agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.direcFisica),sizeof(uint32_t));
          enviar_paquete(paquete,socket);
          eliminar_paquete(paquete);
          break;
         case MOV_OUT:
+         msgLog = "ESCRIBIR";
          paquete = crear_paquete(MOV_OUT);
          agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.direcFisica),sizeof(uint32_t));
          agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.valor),sizeof(uint32_t));
@@ -40,6 +43,7 @@ void *memoria_routine(void *config){
          eliminar_paquete(paquete);
          break;
         case MMU_MARCO:
+         msgLog = "BUSCAR MARCO";
          paquete = crear_paquete(MMU_MARCO);
          agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.idPagina),sizeof(uint32_t));
          agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.idTablaPagina),sizeof(uint32_t));
@@ -52,6 +56,11 @@ void *memoria_routine(void *config){
          pthread_mutex_unlock(&mutex_logger);
         break;
         }
+
+        pthread_mutex_lock(&mutex_logger);
+        log_error(loggerMemoria,"PID: %d - Acción: %s - Segmento: %d - Pagina: %d - Dirección Fisica: %d",mi_contexto->id,msgLog,configMemoria->numSegActual,configMemoria->numPagActual,configMemoria->pipelineMemoria.direcFisica);
+        pthread_mutex_unlock(&mutex_logger);
+
         codigo_operacion = recibir_operacion(socket);
         tamanio_paquete = tamanio_restante = largo_paquete(socket);
         switch (codigo_operacion)

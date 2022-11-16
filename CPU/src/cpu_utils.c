@@ -25,6 +25,9 @@ void init_globals_cpu(t_config *config)
     configMemoria=(t_configMemoria*)malloc(sizeof(t_configMemoria));
     configMemoria->entradasTLB = entradasTLB;
     tlb=(t_tlb*)malloc(sizeof(t_tlb)*(entradasTLB));
+    for(uint i = 0; i < entradasTLB; i++){
+        tlb[i].pid = -1;
+    }
 }
 
 void finalizar_cpu(t_config *config, t_log *logger)
