@@ -144,6 +144,7 @@ void execute(t_auxCiclo* auxCiclo){
         case 5://EXIT
             devolverContexto = true;
             mi_contexto -> pipeline.operacion = EXIT_PROCESO;
+            limpiar_tlb();
             break;
         default:
     }
@@ -153,7 +154,7 @@ void check_interrupt(){
     pthread_mutex_lock(&mutex_flag);
     if(flag_interrupcion == 1){
         if(pid_interrupt == mi_contexto->id){
-            if(mi_contexto->pipeline.operacion == PROXIMO_PCB){
+            if(mi_contexto->pipeline.operacion == PROXIMO_PCB){ // cuidado cuando tocamos la pipeline.operacion para mandar msg a memoria
                 
                 flag_interrupcion = 0;
                 
