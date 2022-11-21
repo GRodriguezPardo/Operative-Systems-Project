@@ -79,6 +79,7 @@ void *dispatch_routine(void* socket){
         msg = NULL;
         msg = recibir(socket_dispatch);
         segmentos = (t_segmento*)msg;
+        free(msg);
         msg = NULL;
         ////////////// Recibiendo Instrucciones//////////////
         msg = recibir(socket_dispatch);

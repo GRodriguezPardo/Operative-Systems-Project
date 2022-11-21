@@ -20,7 +20,8 @@ typedef struct mem_config
         *pathSwap;
     uint32_t tamanioMemoria, 
         tamanioPagina, 
-        paginasPorTabla, 
+        paginasPorTabla,
+        entradasPorTabla, 
         retardoMemoria,
         marcosPorProceso,
         retardoSwap,
@@ -32,6 +33,7 @@ typedef struct mem_config
 typedef struct t_segmento_pcb {
     uint32_t tamanio;
     uint32_t identificador_tabla;
+    uint32_t nro_segmento;
 } t_segmento_pcb;
 
 typedef struct tablaPaginas
@@ -58,7 +60,7 @@ typedef struct pagina_page_fault {
 //////// ESTRUCTURAS GLOBALES /////////
 extern t_config *config;
 extern t_log *logger;
-extern t_memoria_config ConfigMemoria;
+extern t_memoria_config configMemoria;
 extern pthread_mutex_t mx_logger;
 extern pthread_mutex_t mx_main;
 extern pthread_mutex_t mx_espacioUsuario;

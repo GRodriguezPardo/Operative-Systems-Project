@@ -9,8 +9,8 @@ uint32_t pag_crearTablaPaginas(uint32_t _idProceso, uint32_t tamSegmento){
     tablaPaginas->idProceso = _idProceso;
     tablaPaginas->tabla = list_create();
 
-    uint32_t cantRealPaginas = tamSegmento / ConfigMemoria.tamanioPagina;
-    for (uint32_t indice = 0; indice < ConfigMemoria.paginasPorTabla; indice++)
+    uint32_t cantRealPaginas = tamSegmento / configMemoria.tamanioPagina;
+    for (uint32_t indice = 0; indice < configMemoria.paginasPorTabla; indice++)
     {
         bool paginaDisponibleEnSwap = indice < cantRealPaginas;
         t_pagina *pagina = pag_crearPagina(paginaDisponibleEnSwap);

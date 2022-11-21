@@ -16,7 +16,7 @@ void cpu_routine(int socketFd, int *returnStatus){
         aplicar_retardo(configMemoria.retardoMemoria);
         switch (codPeticion)
         {
-        /* QUE PASA SI MMU SACA LA DIRECCION FISICA DIRECTAMENTE DESDE TLB Y ESE MARCO FUE REEMPLAZADO */
+        /* QUE PASA SI MMU SACA LA DIRECCION FISICA DIRECTAMENTE DESDE TLB Y ESE MARCO FUE REEMPLAZADO ---> RTA: Page Fault */
         case MOV_IN:
             codRespuesta = MOV_IN_VALOR;
             direccionFisica = recibir_uint32t(socketFd); //recibo la direccion
@@ -43,7 +43,7 @@ void cpu_routine(int socketFd, int *returnStatus){
                 pagPF->idProceso = pid;
                 pagPF->idTabla = idTabla;
                 pagPF->numPagina = numPagina;
-                insertar_pagina_pageFault(listaPageFaults, pagPF);
+                insertar_pagina_pageFault(ListaPageFaults, pagPF);
             }
             else 
                 valorRespuesta = marco;
@@ -78,17 +78,19 @@ static void responder_handshakeCPU(int socket){
     free(msg);
 }
 
+// cpu manda la dirección fisica
+
 uint32_t leer_memoria(uint32_t offset){
     uint32_t valorLeido;
     pthread_mutex_lock(&mx_espacioUsuario);
-    valorLeido = *(uint32_t *)(espacioUsuario + offset);
+    valorLeido = *(uint32_t *)(EspacioUsuario + offset);
     pthread_mutex_unlock(&mx_espacioUsuario);
     return valorLeido;
 }
 
 void escribir_memoria(uint32_t offset, uint32_t valor){
     pthread_mutex_lock(&mx_espacioUsuario);
-    memcpy(espacioUsuario + offset, &valor, sizeof(uint32_t));
+    memcpy(EspacioUsuario + offset, &valor, sizeof(uint32_t));
     pthread_mutex_unlock(&mx_espacioUsuario);
 }
 

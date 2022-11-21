@@ -5,6 +5,8 @@ static void responder_OK(int socketFd, op_code code);
 void kernel_routine(int socketKernel, int* returnStatus) {
     recibir_handshake(socketKernel, INIT_KERNEL);
     responder_OK(socketKernel, INIT_KERNEL);
+    t_segmento_pcb* segmentos;
+    void * msg;
 
     while (1) {
         op_code operacion = recibir_operacion(socketKernel);
@@ -16,6 +18,11 @@ void kernel_routine(int socketKernel, int* returnStatus) {
         case NUEVO_PROCESO:
             idProceso = recibir_uint32t(socketKernel);
             uint32_t cantidadSegmentos = recibir_uint32t(socketKernel);
+            msg = recibir(socketKernel);
+            segmentos = (t_segmento_pcb*)msg;
+            free(msg);
+            msg = NULL;
+
             //NOTA: chequear si es necesario recibir los tamaños (si influyen o no al reservar espacio en swap).
             //si siempre se reserva el maximo de un segmento, solo recibo la cantidad
 
@@ -23,7 +30,7 @@ void kernel_routine(int socketKernel, int* returnStatus) {
 
             for (uint32_t i = 0; i < cantidadSegmentos; i++)
             {
-                uint32_t idTabla = pag_crearTablaPaginas(idProceso);                
+                uint32_t idTabla = pag_crearTablaPaginas(idProceso,segmentos->tamanio);                
                 agregar_a_paquete(packRespuesta, (void *)&idTabla, sizeof(uint32_t));
             }
 
