@@ -4,6 +4,7 @@
 #include "../globals.h"
 #include "../cpu_utils.h"
 #include "./mmu.h"
+#include "./tlb.h"
 #include <commons/log.h>
 #include <commons/config.h>
 #include <pthread.h>

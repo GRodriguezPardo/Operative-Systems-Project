@@ -5,12 +5,14 @@ t_contexto *mi_contexto;
 t_configMemoria *configMemoria;
 
 int flag_interrupcion;
-
+int flag_segFault;
+int flag_pageFault;
 
 void **pipeline;
 void **pipelineMemoria;
 
-t_tlb *tlb;
+char* reemplazo_tlb;
+t_list* colaTLB;
 
 uint32_t pid_interrupt;
 

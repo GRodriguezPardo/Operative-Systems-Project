@@ -4,6 +4,7 @@
 #include <commons/bitarray.h>
 #include <commons/config.h>
 #include <commons/collections/list.h>
+#include <commons/collections/queue.h>
 #include <commons/collections/dictionary.h>
 #include <commons/log.h>
 #include <stdlib.h>
@@ -20,7 +21,8 @@ typedef struct mem_config
         *pathSwap;
     uint32_t tamanioMemoria, 
         tamanioPagina, 
-        paginasPorTabla, 
+        paginasPorTabla,
+        entradasPorTabla, 
         retardoMemoria,
         marcosPorProceso,
         retardoSwap,
@@ -29,10 +31,16 @@ typedef struct mem_config
         cantidadPaginasSwap;
 } t_memoria_config;
 
+typedef struct t_segmento_pcb {
+    uint32_t tamanio;
+    uint32_t identificador_tabla;
+    uint32_t nro_segmento;
+} t_segmento_pcb;
+
 typedef struct dataProceso
 {
     t_list *tablasProceso;
-    t_list *paginasPresentes;
+    t_queue *paginasPresentes;
 } t_dataProceso;
 
 typedef struct pagina

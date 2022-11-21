@@ -8,11 +8,13 @@
 #include <semaphore.h>
 #include "cpu_utils.h"
 #include "globals.h"
+#include "./functions/tlb.h"
 
 void init_globals_cpu(t_config *config)
 {
     int entradasTLB = config_get_int_value((t_config*) config, "ENTRADAS_TLB");
 
+    reemplazo_tlb = config_get_string_value((t_config*) config, "REEMPLAZO_TLB");
     pthread_mutex_init(&mutex_logger, NULL);
     pthread_mutex_init(&mutex_dispatch_response, NULL);
     pthread_mutex_init(&mutex_ejecucion, NULL);
@@ -24,7 +26,10 @@ void init_globals_cpu(t_config *config)
     mi_contexto=(t_contexto*)malloc(sizeof(t_contexto));
     configMemoria=(t_configMemoria*)malloc(sizeof(t_configMemoria));
     configMemoria->entradasTLB = entradasTLB;
-    tlb=(t_tlb*)malloc(sizeof(t_tlb)*(entradasTLB));
+
+    iniciar_estructuras();
+
+    
 }
 
 void finalizar_cpu(t_config *config, t_log *logger)
@@ -40,7 +45,6 @@ void finalizar_cpu(t_config *config, t_log *logger)
     sem_close(&sem_mmu);
     free(mi_contexto);
     free(configMemoria);
-    free(tlb);
     log_info(logger, "Finalizando programa.");
     log_destroy(logger);
     config_destroy(config);
@@ -60,3 +64,4 @@ void logger_cpu_error(t_log *logger, const char *message)
     log_error(logger, message);
     pthread_mutex_unlock(&mutex_logger);
 }
+

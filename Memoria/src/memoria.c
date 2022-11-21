@@ -1,42 +1,45 @@
 #include "memoria.h"
 
 int main(int argc, char** argv){
-    logger = log_create("../memoria.log", "Memoria - Main", 1, LOG_LEVEL_INFO);
-    pthread_mutex_init(&mx_logger, NULL);
+    loggerMain = log_create("../memoriaMain.log", "Memoria - Main", false, LOG_LEVEL_INFO);
+    pthread_mutex_init(&mx_loggerMain, NULL);
 
-    loggear_info(logger, "Iniciando módulo memoria...");
+    loggerAux = log_create("../memoriaAuxiliares.log", "Memoria - Auxiliares", true, LOG_LEVEL_INFO);
+    pthread_mutex_init(&mx_loggerAux, NULL);
+
+    loggear_info(loggerAux, "Iniciando módulo memoria...", false);
 
     // Iniciando config y logs
     config = config_create("../memoria.config");
     if (config == NULL)
     {
-        loggear_error(logger, "Archivo de configuración no encontrado.");
+        loggear_error(loggerAux, "Archivo de configuración no encontrado.", false);
         exit(EXIT_FAILURE);
     }
 
     cargar_configuracion_memoria();
-    loggear_info(logger, "Configuración memoria cargada.");
+    loggear_info(loggerAux, "Configuración memoria cargada.", false);
 
     // Inicializando espacio de datos y de Kernel
     inicializar_espacio_usuario();
     inicializar_espacio_tablas();
-    inicializar_lista_pageFaults();
+    inicializar_tabla_frames();
     inicializar_mapas();
 
     swap_inicializar();
-    loggear_info(logger, "Espacio SWAP inicializado.");
+    loggear_info(loggerAux, "Espacio SWAP inicializado.", false);
 
     // Creando Server
-    loggear_info(logger, "Iniciando server...");
+    loggear_info(loggerAux, "Iniciando server...", false);
     pthread_t threadSv;
     if (pthread_create(&threadSv, NULL, &levantar_server_memoria, (void *) config) < 0) {
-        loggear_error(logger, "Error al iniciar servidor.");
+        loggear_error(loggerAux, "Error al iniciar servidor.", false);
         exit(EXIT_FAILURE);
     }
-    loggear_info(logger, "Servidor OK.");
+    loggear_info(loggerAux, "Servidor OK.", false);
 
     esperar_hilos();
-    loggear_info(logger, "Finalizando módulo memoria...");
+    loggear_info(loggerAux, "Finalizando módulo memoria...", false);
     finalizar_memoria();
     return EXIT_SUCCESS;
 }
@@ -86,12 +89,13 @@ void finalizar_memoria(){
     free(EspacioUsuario);
     swap_cerrar();
     destruir_espacio_tablas();
-    destruir_lista_pageFaults();
+    destruir_tabla_frames();
     destruir_mapas();
     config_destroy(config);
 
-    loggear_info(logger, "Módulo memoria finalizado.");
-    log_destroy(logger);
+    loggear_info(loggerAux, "Módulo memoria finalizado.", false);
+    log_destroy(loggerAux);
+    log_destroy(loggerMain);
     cerrarMutexes();
 }
 
@@ -100,19 +104,19 @@ void finalizar_memoria(){
 void inicializar_espacio_usuario(){
     EspacioUsuario = malloc(ConfigMemoria.tamanioMemoria); //espacio de usuario
     pthread_mutex_init(&mx_espacioUsuario, NULL);
-    loggear_info(logger, "Espacio memoria inicializado.");
+    loggear_info(loggerAux, "Espacio memoria inicializado.", false);
 }
 
 void inicializar_espacio_tablas(){
-    EspacioTablasPag = list_create(); //estructura para las tablas de páginas
+    EspacioTablas = dictionary_create();
     pthread_mutex_init(&mx_espacioTablasPag, NULL);
-    loggear_info(logger, "Espacio Kernel inicializado.");
+    loggear_info(loggerAux, "Espacio Kernel inicializado.", false);
 }
 
-void inicializar_lista_pageFaults(){
-    ListaPageFaults = list_create();
-    pthread_mutex_init(&mx_listaPageFaults, NULL);
-    loggear_info(logger, "Lista Page Faults inicializada.");
+void inicializar_tabla_frames(){
+    TablaFrames = dictionary_create();
+    pthread_mutex_init(&mx_tablaFrames, NULL);
+    loggear_info(loggerAux, "Tabla de Frames inicializada.", false);
 }
 
 void inicializar_mapas(){
@@ -134,11 +138,11 @@ void inicializar_mapas(){
 }
 
 void destruir_espacio_tablas(){
-    list_destroy_and_destroy_elements(EspacioTablasPag, &pag_destruirTablaPaginas);
+    dictionary_destroy_and_destroy_elements(EspacioTablas, &pag_destruirTablaPaginas);
 }
 
-void destruir_lista_pageFaults(){
-    list_destroy_and_destroy_elements(ListaPageFaults, &pag_destruirPagina);
+void destruir_tabla_frames(){
+    dictionary_destroy_and_destroy_elements(TablaFrames, &free);
 }
 
 void destruir_mapas(){
@@ -149,7 +153,8 @@ void destruir_mapas(){
 void cerrarMutexes(){
     pthread_mutex_destroy(&mx_espacioUsuario);
     pthread_mutex_destroy(&mx_espacioTablasPag);
-    pthread_mutex_destroy(&mx_listaPageFaults);
+    pthread_mutex_destroy(&mx_tablaFrames);
     pthread_mutex_destroy(&mx_main);
-    pthread_mutex_destroy(&mx_logger);
+    pthread_mutex_destroy(&mx_loggerMain);
+    pthread_mutex_destroy(&mx_loggerAux);
 }

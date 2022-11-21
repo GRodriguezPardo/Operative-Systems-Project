@@ -14,15 +14,15 @@ void cpu_routine(int socketFd, int *returnStatus){
         aplicar_retardo(ConfigMemoria.retardoMemoria);
         switch (codPeticion)
         {
-        /* QUE PASA SI MMU SACA LA DIRECCION FISICA DIRECTAMENTE DESDE TLB Y ESE MARCO FUE REEMPLAZADO */
+        /* QUE PASA SI MMU SACA LA DIRECCION FISICA DIRECTAMENTE DESDE TLB Y ESE MARCO FUE REEMPLAZADO ---> RTA: Page Fault */
         case MOV_IN:
             direccionFisica = recibir_uint32t(socketFd); //recibo la direccion
             uint32_t valorLeido = leer_memoria(direccionFisica);
             responder_cpu(socketFd, MOV_IN_VALOR, valorLeido);
 
             marcarPaginaUsada(direccionFisica, false);
-            char *msg = string_from_format("Acceso a espacio de usuario: PID: %d - Acción: LEER - Dirección física: %d", pid, direccionFisica);
-            loggear_info(loggerMain, msg, true);
+            char *msgLeer = string_from_format("Acceso a espacio de usuario: PID: %d - Acción: LEER - Dirección física: %d", pid, direccionFisica);
+            loggear_info(loggerMain, msgLeer, true);
             break;
         case MOV_OUT:
             direccionFisica = recibir_uint32t(socketFd); //recibo la direccion
@@ -31,15 +31,15 @@ void cpu_routine(int socketFd, int *returnStatus){
             responder_cpu(socketFd, MOV_OUT_CONFIRMACION, NULL);
 
             marcarPaginaUsada(direccionFisica, true);
-            char *msg = string_from_format("Acceso a espacio de usuario: PID: %d - Acción: ESCRIBIR - Dirección física: %d", pid, direccionFisica);
-            loggear_info(loggerMain, msg, true);
+            char *msgEscribir = string_from_format("Acceso a espacio de usuario: PID: %d - Acción: ESCRIBIR - Dirección física: %d", pid, direccionFisica);
+            loggear_info(loggerMain, msgEscribir, true);
             break;
         case MMU_MARCO:
             uint32_t numPagina = recibir_uint32t(socketFd);
             uint32_t idTabla = recibir_uint32t(socketFd);
             uint32_t marco;
 
-            if (pag_obtenerMarcoPagina(idTabla, numPagina, &marco) == -1){
+            if (pag_obtenerMarcoPagina(pid, idTabla, numPagina, &marco) == -1){
                 responder_cpu(socketFd, PAGE_FAULT, NULL);
             }
             else {
@@ -75,6 +75,8 @@ void responder_handshakeCPU(int socket){
     char *msg = string_from_format("CPU Thread :: entradasPorTabla: %d // tamanioPagina: %d enviados.", ConfigMemoria.paginasPorTabla, ConfigMemoria.tamanioPagina);
     loggear_info(loggerAux, msg, true);
 }
+
+// cpu manda la dirección fisica
 
 uint32_t leer_memoria(uint32_t offset){
     uint32_t valorLeido;

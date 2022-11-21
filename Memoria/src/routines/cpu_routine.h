@@ -16,4 +16,6 @@ void escribir_memoria(uint32_t direccionFisica, uint32_t valor);
 void responder_cpu(int socket, op_code code, uint32_t valor);
 void responder_handshakeCPU(int socket);
 
+void marcarPaginaUsada(uint32_t direccion, bool fueModificada);
+
 #endif /* CPUROUTINE_H_ */

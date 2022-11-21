@@ -1,25 +1,15 @@
 #include "mmu.h"
 #include <math.h>
 
-
-
-bool buscarEnTLB(uint32_t num_segmento, uint32_t num_pagina, uint32_t desplazamiento_pag, op_code instruccion){
-    uint32_t direcFisica;
-    bool encontrado = false;
-
-    for(uint i = 0; i < configMemoria->entradasTLB; i++){
-        if(tlb[i].pid == mi_contexto->id && tlb[i].nro_pag == num_pagina && tlb[i].nro_segmento == num_segmento){
-           encontrado = true;
-           direcFisica = calcularDirecFisica(tlb[i].marco,desplazamiento_pag);
-           configMemoria->pipelineMemoria.operacion = instruccion;  
-           configMemoria->pipelineMemoria.direcFisica = direcFisica;
-           sem_post(&sem_conexion_memoria);
-           break;
-        }
-    }
-    return encontrado;
+bool chequearPageFault(t_configMemoria* configMemoria, t_log* loggerMMU, uint32_t num_segmento, uint32_t num_pagina){
+    if(configMemoria->pipelineMemoria.operacion == PAGE_FAULT){
+            pthread_mutex_lock(&mutex_logger);
+            log_info(loggerMMU,"Page Fault PID: %d - Segmento: %d - Pagina: %d",mi_contexto->id,num_segmento,num_pagina);
+            pthread_mutex_unlock(&mutex_logger);   
+            return true;
+    } 
+    return false;
 }
-
 
 uint32_t calcularDirecFisica(uint32_t marco, uint32_t desplazamiento_pag){
     return marco + desplazamiento_pag;
@@ -31,14 +21,39 @@ void buscarMarco(uint32_t nroSegmento, uint32_t idPagina){
             configMemoria->pipelineMemoria.operacion = MMU_MARCO;
             configMemoria->pipelineMemoria.idTablaPagina = mi_contexto->segmentos[i].identificador_tabla;
             configMemoria->pipelineMemoria.idPagina = idPagina;
-            sem_post(&sem_conexion_memoria);
         }
     }
 }
 
+/*
+void reemplazoTLB(uint32_t num_segmento, uint32_t num_pagina, uint32_t num_marco){
+    bool tlb_incompleta;
+   
+    for(uint i = 0; i < configMemoria->entradasTLB; i ++){
+        if(!tlb[i].presente){
+            // agregar_algoritmo();
+            //indice = i;
+            tlb_incompleta = true;
+            //break;
+        }
+    }
+    if(!tlb_incompleta){
+        //reemplazar_algoritmo(indice);
+    }
+} */
+
 op_code traducciones(op_code instruccion){ 
     uint32_t num_segmento, desplazamiento_segmento, num_pagina, desplazamiento_pag,
     direcFisica, direcLogica;
+    bool pageFault;
+
+    t_log* loggerMMU;
+    {
+        char buffer[25];
+        sprintf(buffer, "Cpu - MMU");
+        loggerMMU = log_create("../cpu.log", buffer, 0, LOG_LEVEL_INFO);
+    }
+
 
     direcLogica = configMemoria->pipelineMemoria.direcLogica;
 
@@ -50,42 +65,67 @@ op_code traducciones(op_code instruccion){
 
     //chequear que el desplazamiento_segmento sea menor que el tam max del segmento
     //si no se cumple mandar a kernel y seg fault
-    if(desplazamiento_segmento > configMemoria->tamanioMaximoSegmento){
+
+    if(num_segmento >= mi_contexto->cantSegmentos || desplazamiento_segmento > mi_contexto->segmentos[num_segmento].tamanio){
         return SEG_FAULT; 
     }
 
-    //busco si tengo guardado en la tlb el marco
-    bool encontroTLB = buscarEnTLB(num_segmento,num_pagina,desplazamiento_pag,instruccion);
+    configMemoria->numSegActual = num_segmento;
+    configMemoria->numPagActual = num_pagina;
 
-    if(encontroTLB){ // REVISAR SI ES NECESARIO
+    //busco si tengo guardado en la tlb el marco
+    int num_marco = buscarEnTLB(mi_contexto->id,num_segmento,num_pagina);
+
+    if(num_marco != -1){ 
+        direcFisica = calcularDirecFisica(num_marco,desplazamiento_pag);
+        configMemoria->pipelineMemoria.operacion = instruccion;  
+        configMemoria->pipelineMemoria.direcFisica = direcFisica;
+           
+        pthread_mutex_lock(&mutex_logger);
+        log_info(loggerMMU,"PID: %d - TLB HIT - Segmento: %d - Pagina: %d",mi_contexto->id, num_segmento, num_pagina);
+        pthread_mutex_unlock(&mutex_logger);         
+
+        sem_post(&sem_conexion_memoria);
         sem_wait(&sem_mmu);
-        if(configMemoria->pipelineMemoria.operacion == PAGE_FAULT){
+        
+        pageFault = chequearPageFault(configMemoria,loggerMMU,num_segmento,num_pagina);
+
+        if(pageFault){
             return PAGE_FAULT;
         }
+
         return VALOR_OK;//configMemoria->pipelineMemoria.valor;
     }else{
+        pthread_mutex_lock(&mutex_logger);
+        log_info(loggerMMU,"PID: %d - TLB MISS - Segmento: %d - Pagina: %d",mi_contexto->id,num_segmento,num_pagina);
+        pthread_mutex_unlock(&mutex_logger); 
+
         buscarMarco(num_segmento,num_pagina);
+        
+        sem_post(&sem_conexion_memoria);
         sem_wait(&sem_mmu);
-        if(configMemoria->pipelineMemoria.operacion == PAGE_FAULT){
+
+        pageFault = chequearPageFault(configMemoria,loggerMMU,num_segmento,num_pagina);
+
+        if(pageFault){
             return PAGE_FAULT;
         }
-        //reemplazoTLB(); ---> vamos a setear todos los pid en -1 cada vez que una entrada del tlb
-        //                     esta vacia, si encontramos un -1 lo guardamos ahi sin hacer el algoritmo 
+
+        agregar_entrada_tlb(mi_contexto->id, num_segmento, num_pagina, configMemoria->numMarco); 
+  
         direcFisica = calcularDirecFisica(configMemoria->numMarco,desplazamiento_pag);
         configMemoria->pipelineMemoria.operacion = instruccion;  
         configMemoria->pipelineMemoria.direcFisica = direcFisica;
-        sem_wait(&sem_conexion_memoria);
-        if(configMemoria->pipelineMemoria.operacion == PAGE_FAULT){
+
+        sem_post(&sem_conexion_memoria);
+        sem_wait(&sem_mmu);
+
+        pageFault = chequearPageFault(configMemoria,loggerMMU,num_segmento,num_pagina);
+
+        if(pageFault){
             return PAGE_FAULT;
         }
         return VALOR_OK;
     }
 
-    //si no esta, pedirle a la memoria el marco y ver si tira o no page fault
-    //si tira page fault devolver a kernel y no actualizar el pc
-    //si no guardar en la tlb o reemplazar 
-
 }
-
-
-

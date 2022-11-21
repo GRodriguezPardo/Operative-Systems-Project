@@ -5,6 +5,8 @@ static void responder_OK(int socketFd, op_code code);
 void kernel_routine(int socketKernel, int* returnStatus) {
     recibir_handshake(socketKernel, INIT_KERNEL);
     responder_OK(socketKernel, INIT_MEMORIA);
+    t_segmento_pcb* segmentos;
+    void * msg;
 
 //    while (1) {
         op_code operacion = recibir_operacion(socketKernel);
@@ -16,15 +18,18 @@ void kernel_routine(int socketKernel, int* returnStatus) {
         {
         case NUEVO_PROCESO:          
             cantidadSegmentos = recibir_uint32t(socketKernel);
+            msg = recibir(socketKernel);
+            segmentos = (t_segmento_pcb*)msg;
+
             t_paquete *packRespuesta = crear_paquete(NUEVO_PROCESO);
 
             t_dataProceso *dataP = (t_dataProceso *)malloc(sizeof(t_dataProceso));
             dataP->tablasProceso = list_create();
-            dataP->paginasPresentes = list_create();
+            dataP->paginasPresentes = queue_create();
 
             for (uint32_t n = 0; n < cantidadSegmentos; n++)
             {
-                uint32_t _idTabla = pag_crearTablaPaginas(dataP->tablasProceso, n);
+                uint32_t _idTabla = pag_crearTablaPaginas(dataP->tablasProceso, segmentos[n].tamanio);
                 agregar_a_paquete(packRespuesta, (void *)&_idTabla, sizeof(uint32_t));
                 char *msg = string_from_format("Creacion de Tabla de Paginas -> PID: %d - Segmento: %d - TAMAÑO: %d páginas", pid, n, ConfigMemoria.paginasPorTabla);
                 loggear_info(loggerMain, msg, true);
@@ -38,6 +43,10 @@ void kernel_routine(int socketKernel, int* returnStatus) {
 
             enviar_paquete(packRespuesta, socketKernel);
             eliminar_paquete(packRespuesta);
+
+            free(msg);
+            msg = NULL;
+
             break;
         case EXIT_PROCESO:
             liberar_proceso(pid);
@@ -76,30 +85,10 @@ void liberar_proceso(uint32_t pid){
     pthread_mutex_unlock(&mx_espacioTablasPag);
     free(sPID);
 
-    list_destroy(dataP->paginasPresentes);
+    queue_destroy(dataP->paginasPresentes);
     list_destroy_and_destroy_elements(dataP->tablasProceso, pag_destruirTablaPaginas);
     free(dataP);
 }
-
-void crearEntradaTablaFrames(uint32_t numFrame, uint32_t pid, uint32_t idTabla, uint32_t numPagina){
-    t_infoFrame *info = (t_infoFrame *)malloc(sizeof(t_infoFrame));
-    info->pid = pid;
-    info->idTabla = idTabla;
-    info->numPagina = numPagina;
-    
-    char *sNumFrame = string_itoa(numFrame);
-    dictionary_put(TablaFrames, sNumFrame, info);
-    free(sNumFrame);
-}
-
-void borrarEntradaTablaFrames(uint32_t numFrame){
-    char *sNumFrame = string_itoa(numFrame);
-    if(dictionary_has_key(TablaFrames, sNumFrame)){
-        dictionary_remove_and_destroy(TablaFrames, sNumFrame, &free);
-    }
-    free(sNumFrame);
-}
-
 
 static void responder_OK(int socket, op_code code){
     t_paquete *pack = crear_paquete(code);

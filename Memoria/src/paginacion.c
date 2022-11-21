@@ -1,19 +1,20 @@
 #include "paginacion.h"
 
-static t_pagina *pag_crearPagina(int id, uint32_t numeroSegmento);
+static t_pagina *pag_crearPagina(int id, uint32_t numeroSegmento, bool estaEnSwap);
 static void pag_destruir_pagina(void *_pagina);
 
-uint32_t pag_crearTablaPaginas(t_list *listaTablas, uint32_t numSegmento){
-    t_list *tabla = list_create();
+uint32_t pag_crearTablaPaginas(t_list *listaTablas, uint32_t tamanioSegmento){
+    t_list *nuevaTabla = list_create();
 
-    uint32_t idTabla = listaTablas->elements_count;
+    uint32_t idTabla = listaTablas->elements_count; //siempre de 0 a cantidadDeSegmentos    
+    uint32_t cantRealPaginas = tamanioSegmento / ConfigMemoria.tamanioPagina;
     for (uint32_t i = 0; i < ConfigMemoria.paginasPorTabla; i++)
     {
-        t_pagina *pagina = pag_crearPagina(tabla->elements_count, numSegmento);
-        list_add(tabla, pagina);
+        t_pagina *pagina = pag_crearPagina(nuevaTabla->elements_count, idTabla, i < cantRealPaginas);
+        list_add(nuevaTabla, pagina);
     }
 
-    list_add(listaTablas, tabla);
+    list_add(listaTablas, nuevaTabla);
     return idTabla;
 }
 
@@ -38,17 +39,16 @@ t_pagina *pag_get_pagina(uint32_t pid, uint32_t idTabla, uint32_t numPagina){
     t_list *tablaActual = list_get(dataP->tablasProceso, idTabla);
     t_pagina *pagina = list_get(tablaActual, numPagina);
     return pagina;
-
 }
 
 void pag_destruirTablaPaginas(void *_tabla){
     t_list *tablaPag = (t_list *)_tabla;
-    list_destroy_and_destroy_elements(tablaPag, &free);
+    list_destroy_and_destroy_elements(tablaPag, &pag_destruir_pagina);
 }
 
 // FUNCIONES PRIVADAS
 
-static t_pagina *pag_crearPagina(int id, uint32_t _numeroSegmento){
+static t_pagina *pag_crearPagina(int id, uint32_t _numeroSegmento, bool estaEnSwap){
     t_pagina *pagina = (t_pagina *) malloc(sizeof(t_pagina));
     pagina->id = (uint32_t)id;
     pagina->numeroSegmento = _numeroSegmento;
@@ -56,7 +56,7 @@ static t_pagina *pag_crearPagina(int id, uint32_t _numeroSegmento){
     pagina->modificado = false;
     pagina->presente = false;
     pagina->usado = false;
-    pagina->posicion_swap = swap_crear_pagina();
+    pagina->posicion_swap = estaEnSwap ? swap_crear_pagina() : NULL;
 
     return pagina;
 }

@@ -26,17 +26,12 @@ typedef struct t_segmento {
     uint32_t identificador_tabla;
 } t_segmento;
 
-typedef struct t_tlb {
-    uint32_t pid;
-    uint32_t nro_segmento;
-    uint32_t nro_pag;
-    uint32_t marco;
-} t_tlb;
-
 typedef struct _configMem{
     uint32_t entradasTablaPaginas;
     uint32_t tamanioPagina;
     uint32_t tamanioMaximoSegmento;
+    uint32_t numSegActual;
+    uint32_t numPagActual;
     int entradasTLB;
     t_pipeline pipelineMemoria;
     uint32_t numMarco;
@@ -57,13 +52,16 @@ typedef struct t_contexto
 } t_contexto;
 
 extern int flag_interrupcion;
+extern int flag_segFault;
+extern int flag_pageFault;
 
 
 extern t_contexto *mi_contexto;
 
 extern t_configMemoria *configMemoria;
 
-extern t_tlb *tlb;
+extern char* reemplazo_tlb;
+extern t_list* colaTLB;
 
 extern void **pipeline;
 extern void **pipelineMemoria;
