@@ -2,6 +2,7 @@
 #define CPUROUTINE_H_
 
 #include "../memoria_utils.h"
+#include "../memoria_globals.h"
 #include "../paginacion.h"
 #include <commons/config.h>
 #include <commons/log.h>

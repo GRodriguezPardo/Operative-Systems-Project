@@ -4,7 +4,7 @@
 #include <commons/bitarray.h>
 #include <commons/config.h>
 #include <commons/collections/list.h>
-#include <commons/collections/queue.h>
+#include <commons/collections/dictionary.h>
 #include <commons/log.h>
 #include <stdlib.h>
 #include <thesenate/tcp_client.h>
@@ -29,46 +29,46 @@ typedef struct mem_config
         cantidadPaginasSwap;
 } t_memoria_config;
 
-typedef struct t_segmento_pcb {
-    uint32_t tamanio;
-    uint32_t identificador_tabla;
-} t_segmento_pcb;
-
-typedef struct tablaPaginas
+typedef struct dataProceso
 {
-    uint32_t idProceso;
-    t_list *tabla;
-} t_tablaPaginas;
+    t_list *tablasProceso;
+    t_list *paginasPresentes;
+} t_dataProceso;
 
 typedef struct pagina
 {
-    uint32_t marco,
-        presente, 
-        usado, 
-        modificado,
+    uint32_t id,
+        numeroSegmento,
+        marco,
         posicion_swap;
+    bool presente, 
+        usado, 
+        modificado;
 } t_pagina;
 
-typedef struct pagina_page_fault {
-    uint32_t idProceso;
-    uint32_t idTabla;
-    uint32_t numPagina;
-} t_pagina_page_fault;
+typedef struct infoFrame
+{
+    uint32_t pid,
+        idTabla,
+        numPagina;
+} t_infoFrame;
 
 //////// ESTRUCTURAS GLOBALES /////////
 extern t_config *config;
-extern t_log *logger;
+extern t_log *loggerMain;
+extern t_log *loggerAux;
 extern t_memoria_config ConfigMemoria;
-extern pthread_mutex_t mx_logger;
+extern pthread_mutex_t mx_loggerMain;
+extern pthread_mutex_t mx_loggerAux;
 extern pthread_mutex_t mx_main;
 extern pthread_mutex_t mx_espacioUsuario;
 extern pthread_mutex_t mx_espacioTablasPag;
-extern pthread_mutex_t mx_listaPageFaults;
+extern pthread_mutex_t mx_tablaFrames;
 extern void *EspacioUsuario;
-extern t_list *EspacioTablasPag;
+extern t_dictionary *EspacioTablas;
 extern t_bitarray *MapaFrames;
 extern t_bitarray *MapaSwap;
-extern t_list *ListaPageFaults;
+extern t_dictionary *TablaFrames;
 extern int swapFile;
 
 #endif /* MEMORIA_GLOBALS_H_ */
