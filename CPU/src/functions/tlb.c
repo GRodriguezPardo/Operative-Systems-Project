@@ -1,7 +1,10 @@
 #include "./tlb.h"
 
+t_log* loggerTLB;
+
 void iniciar_estructuras(){
     colaTLB = list_create();
+    loggerTLB = log_create("../cpu.log", "CPU - TLB", 0, LOG_LEVEL_INFO);
 }
 
 void agregar_entrada_tlb(uint32_t pid, uint32_t num_segmento, uint32_t num_pagina, uint32_t num_marco){
@@ -16,8 +19,14 @@ void agregar_entrada_tlb(uint32_t pid, uint32_t num_segmento, uint32_t num_pagin
         reemplazar_pagina(tlb);
         return;
     }
+    tlb->nro_entrada = list_size(colaTLB);
 
     list_add(colaTLB, tlb);
+
+    pthread_mutex_lock(&mutex_logger);
+    log_info(loggerTLB,"%d |PID: %d |SEGMENTO: %d |PAGINA: %d |MARCO: %d",tlb->nro_entrada,tlb->pid,tlb->nro_segmento,tlb->nro_pag,tlb->marco);
+    pthread_mutex_unlock(&mutex_logger);
+
 }
 
 int buscarEnTLB(uint32_t pid, uint32_t num_segmento, uint32_t num_pagina)
@@ -50,9 +59,15 @@ int buscarEnTLB(uint32_t pid, uint32_t num_segmento, uint32_t num_pagina)
 */
 void reemplazar_pagina(t_tlb *entrada)
 {
- //   t_tlb *aux = list_get(colaTLB, 0);
+    t_tlb *aux = list_get(colaTLB, 0);
+    entrada->nro_entrada = aux->nro_entrada;
     list_remove_and_destroy_element(colaTLB, 0, free);
     list_add(colaTLB, entrada);
+
+    pthread_mutex_lock(&mutex_logger);
+    log_info(loggerTLB,"%d |PID: %d |SEGMENTO: %d |PAGINA: %d |MARCO: %d",entrada->nro_entrada,entrada->pid,entrada->nro_segmento,entrada->nro_pag,entrada->marco);
+    pthread_mutex_unlock(&mutex_logger);
+    
 }
 
 void limpiar_tlb(){

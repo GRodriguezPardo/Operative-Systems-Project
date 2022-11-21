@@ -84,7 +84,7 @@ void execute(t_auxCiclo* auxCiclo){
             break;
         case 2://mov_in
             operacion = MOV_IN;
-            configMemoria->pipelineMemoria.direcFisica = (uint32_t)atoi(auxCiclo->oper2);
+            configMemoria->pipelineMemoria.direcLogica = (uint32_t)atoi(auxCiclo->oper2);
             operacion = traducciones(operacion);
             switch(operacion){
                 case SEG_FAULT:
@@ -104,7 +104,7 @@ void execute(t_auxCiclo* auxCiclo){
             break;
         case 3://mov_out
             operacion = MOV_OUT;
-            configMemoria->pipelineMemoria.direcFisica =(uint32_t)atoi(auxCiclo->oper1);
+            configMemoria->pipelineMemoria.direcLogica =(uint32_t)atoi(auxCiclo->oper1);
             configMemoria->pipelineMemoria.valor = mi_contexto->registros[auxCiclo->register2];
             operacion = traducciones(operacion);
             switch(operacion){

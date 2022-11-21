@@ -6,12 +6,13 @@
 #include <commons/collections/list.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <pthread.h>
 typedef struct t_tlb {
     uint32_t pid;
     uint32_t nro_segmento;
     uint32_t nro_pag;
     uint32_t marco;
+    uint32_t nro_entrada;
     bool presente;
 } t_tlb;
 

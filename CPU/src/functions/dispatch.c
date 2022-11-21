@@ -125,7 +125,7 @@ void *dispatch_routine(void* socket){
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->id),sizeof(uint32_t));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->program_counter),sizeof(uint32_t));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->registros),sizeof(uint32_t)*4);
-                agregar_a_paquete(paquete,(void *)(mi_contexto->segmentos),sizeof(t_segmento)*cantSegmentos);
+                agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos),sizeof(t_segmento)*cantSegmentos);
                 enviar_paquete(paquete,socket_dispatch);
                 eliminar_paquete(paquete);
                 for(size_t i = 0; i < cantidad; i++){
@@ -139,7 +139,7 @@ void *dispatch_routine(void* socket){
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->id),sizeof(uint32_t));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->program_counter),sizeof(uint32_t));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->registros),sizeof(uint32_t)*4);
-                agregar_a_paquete(paquete,(void *)(mi_contexto->segmentos),sizeof(t_segmento)*cantSegmentos);
+                agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos),sizeof(t_segmento)*cantSegmentos);
                 enviar_paquete(paquete,socket_dispatch);
                 eliminar_paquete(paquete);
                 for(size_t i = 0; i < cantidad; i++){
@@ -153,8 +153,8 @@ void *dispatch_routine(void* socket){
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->id),sizeof(uint32_t));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->program_counter),sizeof(uint32_t));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->registros),sizeof(uint32_t)*4);
-                agregar_a_paquete(paquete,(void *)(mi_contexto->segmentos),sizeof(t_segmento)*cantSegmentos);
-                agregar_a_paquete(paquete,(void *)(mi_contexto->dispositivo),strlen(mi_contexto->dispositivo)+1);
+                agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos),sizeof(t_segmento)*cantSegmentos);
+                agregar_a_paquete(paquete,(void *)&(mi_contexto->dispositivo),strlen(mi_contexto->dispositivo)+1);
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->unidades),sizeof(uint32_t));
                 enviar_paquete(paquete,socket_dispatch);
                 eliminar_paquete(paquete);
@@ -169,7 +169,7 @@ void *dispatch_routine(void* socket){
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->id),sizeof(uint32_t));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->program_counter),sizeof(uint32_t));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->registros),sizeof(uint32_t)*4);
-                agregar_a_paquete(paquete,(void *)(mi_contexto->segmentos),sizeof(t_segmento)*cantSegmentos);
+                agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos),sizeof(t_segmento)*cantSegmentos);
                 enviar_paquete(paquete,socket_dispatch);
                 eliminar_paquete(paquete);
                 for(size_t i = 0; i < cantidad; i++){
@@ -183,7 +183,9 @@ void *dispatch_routine(void* socket){
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->id),sizeof(uint32_t));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->program_counter),sizeof(uint32_t));
                 agregar_a_paquete(paquete,(void *)&(mi_contexto->registros),sizeof(uint32_t)*4);
-                agregar_a_paquete(paquete,(void *)(mi_contexto->segmentos),sizeof(t_segmento)*cantSegmentos);
+                agregar_a_paquete(paquete,(void *)&(mi_contexto->segmentos),sizeof(t_segmento)*cantSegmentos);
+                agregar_a_paquete(paquete,(void *)&(configMemoria->numSegActual),sizeof(uint32_t));
+                agregar_a_paquete(paquete,(void *)&(configMemoria->numPagActual),sizeof(uint32_t));
                 enviar_paquete(paquete,socket_dispatch);
                 eliminar_paquete(paquete);
                 for(size_t i = 0; i < cantidad; i++){
