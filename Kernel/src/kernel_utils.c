@@ -22,8 +22,11 @@ void init_globals_kernel(int grado_multiprogramacion)
     sem_init(&sem_grado_multiprogramacion, 0, grado_multiprogramacion);
     sem_init(&sem_proceso_entro_a_new, 0, 0);
     sem_init(&sem_proceso_entro_a_ready, 0, 0);
-    sem_init(&sem_interrupt_routine, 0, 0);
     sem_init(&sem_interrupt_algorithms, 0, 1);
+    sem_init(&sem_interrupt_routine, 0, 0);
+    sem_init(&sem_memory_handlers, 0, 1);
+    sem_init(&sem_memory_routine, 0, 0);
+    sem_init(&sem_memory_page_fault_resolved, 0, 0);
 
     pthread_mutex_init(&mutex_logger, NULL);
     pthread_mutex_init(&mutex_pcb_list, NULL);
@@ -38,9 +41,21 @@ void finalizar_kernel(t_config *config, t_log *logger)
     finalizar_algoritmo();
 
     sem_close(&sem_grado_multiprogramacion);
-    sem_destroy(&sem_grado_multiprogramacion);
     sem_close(&sem_proceso_entro_a_new);
+    sem_close(&sem_proceso_entro_a_ready);
+    sem_close(&sem_interrupt_algorithms);
+    sem_close(&sem_interrupt_routine);
+    sem_close(&sem_memory_handlers);
+    sem_close(&sem_memory_routine);
+    sem_close(&sem_memory_page_fault_resolved);
+    sem_destroy(&sem_grado_multiprogramacion);
     sem_destroy(&sem_proceso_entro_a_new);
+    sem_destroy(&sem_proceso_entro_a_ready);
+    sem_destroy(&sem_interrupt_algorithms);
+    sem_destroy(&sem_interrupt_routine);
+    sem_destroy(&sem_memory_handlers);
+    sem_destroy(&sem_memory_routine);
+    sem_destroy(&sem_memory_page_fault_resolved);
 
     pthread_mutex_destroy(&mutex_logger);
     pthread_mutex_destroy(&mutex_cola_new);

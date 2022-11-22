@@ -7,8 +7,9 @@
 #include <string.h>
 #include <thesenate/tcp_client.h>
 #include <thesenate/tcp_serializacion.h>
-#include "cpu_dispatch_routine.h"
 #include "blocked_routine.h"
+#include "cpu_dispatch_routine.h"
+#include "memoria_routine.h"
 #include "../globals.h"
 #include "../kernel_utils.h"
 
@@ -37,70 +38,108 @@ void *cpu_dispatch_routine(void *config)
         /////// DEALING WITH CASES ///////
         t_pcb* unPcb = NULL;
         char* dispositivo = NULL;
-        uint32_t* unidades = NULL;
+        uint32_t* unidades = NULL, *seg_num = NULL, *page_num = NULL;
         switch (codigo_operacion)
         {
         case INIT_CPU:
-            give_cpu_next_pcb(socket);
             break;
         case DESALOJO_PROCESO:
-            unPcb = obtener_y_actualizar_pcb_recibido(socket);
+            {
+                unPcb = obtener_y_actualizar_pcb_recibido(socket);
+                sale_de_exec(unPcb, DESALOJO_PROCESO);
 
-            {   ////////////// LOGGEANDO //////////////
-                pthread_mutex_lock(&mutex_logger);
-                log_info(logger_dispatch, "Proceso %lu : EXEC -> READY (DESALOJO)", (unsigned long)(unPcb->id));
-                pthread_mutex_unlock(&mutex_logger);
+                {   ////////////// LOGGEANDO //////////////
+                    pthread_mutex_lock(&mutex_logger);
+                    log_info(logger_dispatch, "Proceso %lu : EXEC -> READY (DESALOJO)", (unsigned long)(unPcb->id));
+                    pthread_mutex_unlock(&mutex_logger);
+                }
+
+                ingresar_a_ready(unPcb, DESALOJO_PROCESO);
+                unPcb = NULL;
+                sem_post(&sem_proceso_entro_a_ready);
             }
-
-            sale_de_exec(unPcb, DESALOJO_PROCESO);
-            ingresar_a_ready(unPcb, DESALOJO_PROCESO);
-            unPcb = NULL;
-            sem_post(&sem_proceso_entro_a_ready);
-            
-            give_cpu_next_pcb(socket);
             break;
         case EXIT_PROCESO:
-            unPcb = obtener_y_actualizar_pcb_recibido(socket);
+            {
+                unPcb = obtener_y_actualizar_pcb_recibido(socket);
+                sale_de_exec(unPcb, EXIT_PROCESO);
 
-            {   ////////////// LOGGEANDO //////////////
-                pthread_mutex_lock(&mutex_logger);
-                log_info(logger_dispatch, "Proceso %lu : EXEC -> EXIT (EXIT)", (unsigned long)(unPcb->id));
-                pthread_mutex_unlock(&mutex_logger);
+                {   ////////////// LOGGEANDO //////////////
+                    pthread_mutex_lock(&mutex_logger);
+                    log_info(logger_dispatch, "Proceso %lu : EXEC -> EXIT (EXIT)", (unsigned long)(unPcb->id));
+                    pthread_mutex_unlock(&mutex_logger);
+                }
+                
+                finalizar_proceso(unPcb);
             }
-
-            sale_de_exec(unPcb, EXIT_PROCESO);
-            finalizar_proceso(unPcb);
-
-            give_cpu_next_pcb(socket);
             break;
         case BLOQUEO_PROCESO:
-            unPcb = obtener_y_actualizar_pcb_recibido(socket);
-            sale_de_exec(unPcb, BLOQUEO_PROCESO);
+            {
+                unPcb = obtener_y_actualizar_pcb_recibido(socket);
+                sale_de_exec(unPcb, BLOQUEO_PROCESO);
 
-            {   ////////////// LOGGEANDO //////////////
-                pthread_mutex_lock(&mutex_logger);
-                log_info(logger_dispatch, "Proceso %lu : EXEC -> BLOCKED (BLOQUEO)", (unsigned long)(unPcb->id));
-                pthread_mutex_unlock(&mutex_logger);
+                {   ////////////// LOGGEANDO //////////////
+                    pthread_mutex_lock(&mutex_logger);
+                    log_info(logger_dispatch, "Proceso %lu : EXEC -> BLOCKED (BLOQUEO)", (unsigned long)(unPcb->id));
+                    pthread_mutex_unlock(&mutex_logger);
+                }
+
+                {   ////////////// BLOCKEANDO //////////////
+                    dispositivo = (char*)recibir(socket);
+                    unidades = (uint32_t*)recibir(socket);
+
+                    bloquear_proceso(unPcb, dispositivo, *unidades);
+
+                    free(dispositivo);
+                    free(unidades);
+                    dispositivo = NULL;
+                    unidades = NULL;
+                }
             }
+            break;
+        case PAGE_FAULT:
+            {
+                unPcb = obtener_y_actualizar_pcb_recibido(socket);
+                sale_de_exec(unPcb, PAGE_FAULT);
 
-            {   ////////////// BLOCKEANDO //////////////
-                dispositivo = (char*)recibir(socket);
-                unidades = (uint32_t*)recibir(socket);
+                {   ////////////// LOGGEANDO //////////////
+                    pthread_mutex_lock(&mutex_logger);
+                    log_info(logger_dispatch, "Proceso %lu : EXEC -> BLOCKED (PAGE_FAULT)", (unsigned long)(unPcb->id));
+                    pthread_mutex_unlock(&mutex_logger);
+                }
 
-                bloquear_proceso(unPcb, dispositivo, *unidades);
+                {   ////////////// BLOCKEANDO //////////////
+                    seg_num = (uint32_t*)recibir(socket);
+                    page_num = (uint32_t*)recibir(socket);
 
-                free(dispositivo);
-                free(unidades);
-                dispositivo = NULL;
-                unidades = NULL;
+                    page_fault_process(unPcb, *seg_num, *page_num);
+                    
+                    free(seg_num);
+                    free(page_num);
+                    seg_num = NULL;
+                    page_num = NULL;
+                }
             }
+            break;
+        case SEG_FAULT:
+            {
+                unPcb = obtener_y_actualizar_pcb_recibido(socket);
+                sale_de_exec(unPcb, SEG_FAULT);
 
-            give_cpu_next_pcb(socket);
+                {   ////////////// LOGGEANDO //////////////
+                    pthread_mutex_lock(&mutex_logger);
+                    log_info(logger_dispatch, "Proceso %lu : EXEC -> EXIT (SEG_FAULT))", (unsigned long)(unPcb->id));
+                    pthread_mutex_unlock(&mutex_logger);
+                }
+                
+                finalizar_proceso(unPcb);
+            }
             break;
         default:
             exit(EXIT_FAILURE);
             break;
         }
+        give_cpu_next_pcb(socket);
     }
     return NULL;
 }

@@ -41,6 +41,11 @@ extern sem_t sem_proceso_entro_a_ready;
 extern sem_t sem_interrupt_routine;
 extern sem_t sem_interrupt_algorithms;
 
+////////////// SEMAFOROS MEMORY ROUTINE //////////////
+extern sem_t sem_memory_handlers;
+extern sem_t sem_memory_routine;
+extern sem_t sem_memory_page_fault_resolved;
+
 ////////////// SEMAFOROS I/O //////////////
 extern sem_t* sem_dispositivos_IO;
 

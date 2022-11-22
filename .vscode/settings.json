@@ -35,7 +35,8 @@
         "round_robin.h": "c",
         "cpu.h": "c",
         "unistd.h": "c",
-        "paginacion.h": "c"
+        "paginacion.h": "c",
+        "feedback.h": "c"
     },
     "C_Cpp.errorSquiggles": "Enabled"
 }

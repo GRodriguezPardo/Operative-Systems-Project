@@ -1,15 +1,13 @@
 #ifndef MEMORIA_ROUTINE_H_
 #define MEMORIA_ROUTINE_H_
 
-#include <commons/config.h>
-#include <commons/string.h>
+#include <stdint.h>
 #include <stdio.h>
-#include <string.h>
-#include <thesenate/tcp_client.h>
-#include <thesenate/tcp_serializacion.h>
+#include "../globals.h"
+
+extern t_pcb* global_pcb_to_memory;
 
 void *memoria_routine(void *config);
-static int conectarAMemoria(t_config *);
-static void iniciarHandshake(int);
+void page_fault_process(t_pcb* pcb, uint32_t seg_num, uint32_t page_num);
 
 #endif /* MEMORIA_ROUTINE_H_ */
