@@ -51,16 +51,23 @@ int sonIguales(const char* str1, const char* str2){
     return !strcmp(str1, str2);
 }
 
-t_dataProceso *get_data_proceso(uint32_t pid){
-    t_dataProceso *dataP;
+t_infoProceso *get_info_proceso(uint32_t pid){
+    t_infoProceso *dataP;
 
     char *sPID = string_itoa(pid);
     pthread_mutex_lock(&mx_espacioTablasPag);
-    dataP = (t_dataProceso *)dictionary_get(EspacioTablas, sPID);
+    dataP = (t_infoProceso *)dictionary_get(EspacioTablas, sPID);
     pthread_mutex_unlock(&mx_espacioTablasPag);
     free(sPID);
 
     return dataP;
+}
+
+t_pagina *get_pagina(uint32_t pid, uint32_t idTabla, uint32_t numPagina){
+    t_infoProceso *dataP = get_info_proceso(pid);
+    t_list *tablaActual = list_get(dataP->tablasProceso, idTabla);
+    t_pagina *pagina = list_get(tablaActual, numPagina);
+    return pagina;
 }
 
 uint32_t asignar_frame_libre(){
@@ -102,20 +109,17 @@ static void marcar_posicion_asignada(t_bitarray *bitmap, int index){
 }
 
 void crearEntradaTablaFrames(uint32_t numFrame, uint32_t pid, uint32_t idTabla, uint32_t numPagina){
-    t_infoFrame *info = (t_infoFrame *)malloc(sizeof(t_infoFrame));
-    info->pid = pid;
-    info->idTabla = idTabla;
-    info->numPagina = numPagina;
+    t_pagina *paginaNueva = get_pagina(pid, idTabla, numPagina);
     
     char *sNumFrame = string_itoa(numFrame);
-    dictionary_put(TablaFrames, sNumFrame, info);
+    dictionary_put(TablaFrames, sNumFrame, paginaNueva);
     free(sNumFrame);
 }
 
 void borrarEntradaTablaFrames(uint32_t numFrame){
     char *sNumFrame = string_itoa(numFrame);
     if(dictionary_has_key(TablaFrames, sNumFrame)){
-        dictionary_remove_and_destroy(TablaFrames, sNumFrame, &free);
+        dictionary_remove(TablaFrames, sNumFrame);
     }
     free(sNumFrame);
 }

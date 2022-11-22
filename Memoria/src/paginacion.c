@@ -24,7 +24,7 @@ En caso contrario, retorna -1.
 */
 int pag_obtenerMarcoPagina(uint32_t pid, uint32_t idTabla, uint32_t numPagina, uint32_t *marco){
     int retVal = 0;
-    t_pagina *pagina = pag_get_pagina(pid, idTabla, numPagina);
+    t_pagina *pagina = get_pagina(pid, idTabla, numPagina);
 
     if (pagina->presente)
         *marco = pagina->marco;
@@ -32,13 +32,6 @@ int pag_obtenerMarcoPagina(uint32_t pid, uint32_t idTabla, uint32_t numPagina, u
         retVal = -1;
     
     return retVal;
-}
-
-t_pagina *pag_get_pagina(uint32_t pid, uint32_t idTabla, uint32_t numPagina){
-    t_dataProceso *dataP = get_data_proceso(pid);
-    t_list *tablaActual = list_get(dataP->tablasProceso, idTabla);
-    t_pagina *pagina = list_get(tablaActual, numPagina);
-    return pagina;
 }
 
 void pag_destruirTablaPaginas(void *_tabla){

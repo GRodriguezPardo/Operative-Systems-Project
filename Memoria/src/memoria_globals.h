@@ -41,7 +41,7 @@ typedef struct dataProceso
 {
     t_list *tablasProceso;
     t_queue *paginasPresentes;
-} t_dataProceso;
+} t_infoProceso;
 
 typedef struct pagina
 {

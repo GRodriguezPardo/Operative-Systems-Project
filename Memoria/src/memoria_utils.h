@@ -17,7 +17,9 @@ void recibir_handshake(int socket, op_code codigo);
 void aplicar_retardo(uint32_t tiempo_ms);
 uint32_t recibir_uint32t(int socket);
 
-t_dataProceso *get_data_proceso(uint32_t pid);
+t_infoProceso *get_info_proceso(uint32_t pid);
+t_pagina *get_pagina(uint32_t pid, uint32_t idTabla, uint32_t numPagina);
+
 uint32_t asignar_frame_libre();
 uint32_t asignar_slot_swap_libre();
 uint32_t asignar_posicion_libre(t_bitarray *bitmap, uint32_t longitudMapa);

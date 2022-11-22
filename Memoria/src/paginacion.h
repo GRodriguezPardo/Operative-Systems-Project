@@ -12,7 +12,6 @@
 uint32_t pag_crearTablaPaginas(t_list *listaTablas, uint32_t tamanioSegmento);
 void pag_liberarPagina(t_pagina *pag);
 int pag_obtenerMarcoPagina(uint32_t pid, uint32_t idTablaPaginas, uint32_t idPagina, uint32_t *marco);
-t_pagina *pag_get_pagina(uint32_t pid, uint32_t idTabla, uint32_t numPagina);
 void pag_destruirTablaPaginas(void *tabla);
 
 #endif /* PAGINACION_H_ */

@@ -93,21 +93,19 @@ void escribir_memoria(uint32_t offset, uint32_t valor){
 }
 
 void marcarPaginaUsada(uint32_t direccion, bool fueModificada){
-    t_infoFrame *infoFrame;
+    t_pagina *paginaUsada;
 
     {
         uint32_t numFrame = direccion / ConfigMemoria.tamanioPagina;
         char *sNumFrame = string_itoa(numFrame);
         pthread_mutex_lock(&mx_tablaFrames);
-        infoFrame = dictionary_get(TablaFrames, sNumFrame);
+        paginaUsada = dictionary_get(TablaFrames, sNumFrame);
         pthread_mutex_unlock(&mx_tablaFrames);
         free(sNumFrame);
     }
 
-    t_pagina *pagUsada = pag_get_pagina(infoFrame->pid, infoFrame->idTabla, infoFrame->numPagina);
-
-    pagUsada->usado = true;
-    pagUsada->modificado = fueModificada;
+    paginaUsada->usado = true;
+    paginaUsada->modificado = fueModificada;
 }
 
 void responder_cpu(int socket, op_code code, uint32_t valor){

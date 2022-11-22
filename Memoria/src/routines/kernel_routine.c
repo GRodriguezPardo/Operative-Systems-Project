@@ -23,13 +23,13 @@ void kernel_routine(int socketKernel, int* returnStatus) {
 
             t_paquete *packRespuesta = crear_paquete(NUEVO_PROCESO);
 
-            t_dataProceso *dataP = (t_dataProceso *)malloc(sizeof(t_dataProceso));
-            dataP->tablasProceso = list_create();
-            dataP->paginasPresentes = queue_create();
+            t_infoProceso *infoP = (t_infoProceso *)malloc(sizeof(t_infoProceso));
+            infoP->tablasProceso = list_create();
+            infoP->paginasPresentes = queue_create();
 
             for (uint32_t n = 0; n < cantidadSegmentos; n++)
             {
-                uint32_t _idTabla = pag_crearTablaPaginas(dataP->tablasProceso, segmentos[n].tamanio);
+                uint32_t _idTabla = pag_crearTablaPaginas(infoP->tablasProceso, segmentos[n].tamanio);
                 agregar_a_paquete(packRespuesta, (void *)&_idTabla, sizeof(uint32_t));
                 char *msg = string_from_format("Creacion de Tabla de Paginas -> PID: %d - Segmento: %d - TAMAÑO: %d páginas", pid, n, ConfigMemoria.paginasPorTabla);
                 loggear_info(loggerMain, msg, true);
@@ -37,7 +37,7 @@ void kernel_routine(int socketKernel, int* returnStatus) {
 
             char *sPID = string_itoa(pid);
             pthread_mutex_lock(&mx_espacioTablasPag);
-            dictionary_put(EspacioTablas, sPID, dataP);
+            dictionary_put(EspacioTablas, sPID, infoP);
             pthread_mutex_unlock(&mx_espacioTablasPag);
             free(sPID);
 
@@ -77,11 +77,11 @@ void kernel_routine(int socketKernel, int* returnStatus) {
 }
 
 void liberar_proceso(uint32_t pid){
-    t_dataProceso *dataP;
+    t_infoProceso *dataP;
 
     char *sPID = string_itoa(pid);
     pthread_mutex_lock(&mx_espacioTablasPag);
-    dataP = (t_dataProceso *)dictionary_remove(EspacioTablas, sPID);
+    dataP = (t_infoProceso *)dictionary_remove(EspacioTablas, sPID);
     pthread_mutex_unlock(&mx_espacioTablasPag);
     free(sPID);
 
