@@ -130,8 +130,6 @@ void *memoria_routine(void *config){
 
 void realizarHandshake(int socket, t_log* logger){
     t_paquete *pack = crear_paquete(INIT_CPU);
-    int valor = 0;
-    agregar_a_paquete(pack, &valor, sizeof(int));
     enviar_paquete(pack, socket);
     eliminar_paquete(pack);
     

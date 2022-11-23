@@ -36,7 +36,7 @@ void loggear_error(t_log *log, char *msg, bool freeMsg){
 }
 
 void aplicar_retardo(uint32_t tiempo_ms){
-    sleep(tiempo_ms / 1000); //tiempo_ms está en milisegundos
+    usleep(tiempo_ms * 1000); //tiempo_ms está en milisegundos
 }
 
 uint32_t recibir_uint32t(int socket){
@@ -55,9 +55,9 @@ t_infoProceso *get_info_proceso(uint32_t pid){
     t_infoProceso *dataP;
 
     char *sPID = string_itoa(pid);
-    pthread_mutex_lock(&mx_espacioTablasPag);
-    dataP = (t_infoProceso *)dictionary_get(EspacioTablas, sPID);
-    pthread_mutex_unlock(&mx_espacioTablasPag);
+    pthread_mutex_lock(&mx_espacioKernel);
+    dataP = (t_infoProceso *)dictionary_get(EspacioKernel, sPID);
+    pthread_mutex_unlock(&mx_espacioKernel);
     free(sPID);
 
     return dataP;
