@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <thesenate/tcp_client.h>
-#include <thesenate/tcp_serializacion.h>
 #include "memoria_routine.h"
 
 op_code global_memory_operation;
@@ -41,7 +40,7 @@ void *memoria_routine(void *config)
 
         respuesta_memoria(socket);
 
-        sem_post(&sem_memory_page_fault_resolved);
+        sem_post(&sem_memory_operation_resolved);
     }
 
     return NULL;
@@ -169,7 +168,7 @@ void *page_fault_routine(void *param)
 
     sem_post(&sem_memory_routine);
 
-    sem_wait(&sem_memory_page_fault_resolved);
+    sem_wait(&sem_memory_operation_resolved);
 
     sem_post(&sem_memory_handlers);
 

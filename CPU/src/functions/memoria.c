@@ -29,8 +29,8 @@ void *memoria_routine(void *config){
         switch (configMemoria->pipelineMemoria.operacion){
         case MOV_IN:
             msgLog = "LEER";
-            paquete = crear_paquete(MOV_IN);
-            ///TODO: Agregar a paquete el process id.
+            paquete = crear_paquete(MOV_IN);          
+            agregar_a_paquete(paquete,(void*)&(mi_contexto->id),sizeof(uint32_t));
             agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.direcFisica),sizeof(uint32_t));
             enviar_paquete(paquete,socket);
             eliminar_paquete(paquete);
@@ -38,7 +38,7 @@ void *memoria_routine(void *config){
         case MOV_OUT:
             msgLog = "ESCRIBIR";
             paquete = crear_paquete(MOV_OUT);
-            ///TODO: Agregar a paquete el process id.
+            agregar_a_paquete(paquete,(void*)&(mi_contexto->id),sizeof(uint32_t));
             agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.direcFisica),sizeof(uint32_t));
             agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.valor),sizeof(uint32_t));
             enviar_paquete(paquete,socket);
@@ -47,7 +47,7 @@ void *memoria_routine(void *config){
         case MMU_MARCO:
             msgLog = "BUSCAR MARCO";
             paquete = crear_paquete(MMU_MARCO);
-            ///TODO: Agregar a paquete el process id.
+            agregar_a_paquete(paquete,(void*)&(mi_contexto->id),sizeof(uint32_t));
             agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.idPagina),sizeof(uint32_t));
             agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.idTablaPagina),sizeof(uint32_t));
             enviar_paquete(paquete,socket);

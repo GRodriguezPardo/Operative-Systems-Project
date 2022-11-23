@@ -29,10 +29,9 @@ void *cpu_dispatch_routine(void *config)
     while (1)
     {   ////////////// BEGINNING CYCLE //////////////
         op_code codigo_operacion;
-        int __attribute__((unused)) tamaño_paquete;
         {   /////// WAITING FOR CPU ///////
             codigo_operacion = recibir_operacion(socket);
-            tamaño_paquete = largo_paquete(socket);
+            (void) largo_paquete(socket);
         }
 
         /////// DEALING WITH CASES ///////

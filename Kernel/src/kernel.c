@@ -67,13 +67,13 @@ int main(int argc, char** argv)
     };
 
     ////////////// CREANDO HILOS DE SUB-RUTINAS //////////////
-    /* 
+    
     logger_monitor_info(logger, "Conectando a memoria.");
     if (pthread_create(&memoria, NULL, memoria_routine, (void *) config) < 0)
     {
         perror("Error: Memoria thread failed.\n");
         logger_monitor_error(logger, "Error: Memoria thread failed.");
-    }*/
+    }
 
     logger_monitor_info(logger, "Conectando a CPU-Dispatch.");
     if (pthread_create(&cpu_dispatch, NULL, cpu_dispatch_routine, (void *) config) < 0)
