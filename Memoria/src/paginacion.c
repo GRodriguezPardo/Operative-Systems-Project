@@ -61,7 +61,12 @@ static void pag_destruir_pagina(void *_pagina){
         borrarEntradaTablaFrames(paginaActual->marco);
     }
 
-    uint32_t numBloque = paginaActual->posicion_swap / ConfigMemoria.tamanioPagina;
-    liberar_posicion(MapaSwap, numBloque);
+    //libero las posiciones de swap de las paginas validas
+    if (paginaActual->posicion_swap != UINT32_MAX)
+    {
+        uint32_t numBloque = paginaActual->posicion_swap / ConfigMemoria.tamanioPagina;
+        liberar_posicion(MapaSwap, numBloque);
+    }
+    
     free(paginaActual);
 }
