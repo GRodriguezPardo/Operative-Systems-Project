@@ -45,11 +45,11 @@ static t_pagina *pag_crearPagina(int id, uint32_t _numeroSegmento, bool estaEnSw
     t_pagina *pagina = (t_pagina *) malloc(sizeof(t_pagina));
     pagina->id = (uint32_t)id;
     pagina->numeroSegmento = _numeroSegmento;
-    pagina->marco = NULL;
+    pagina->marco = UINT32_MAX;
     pagina->modificado = false;
     pagina->presente = false;
     pagina->usado = false;
-    pagina->posicion_swap = estaEnSwap ? swap_crear_pagina() : NULL;
+    pagina->posicion_swap = estaEnSwap ? swap_crear_pagina() : UINT32_MAX;
 
     return pagina;
 }
