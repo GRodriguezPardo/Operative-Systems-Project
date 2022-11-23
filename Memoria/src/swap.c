@@ -1,12 +1,17 @@
 #include "swap.h"
 
-int swapFile; //file descriptor
+FILE *swapFile;
 t_pagina * (*seleccionarVictima)(t_queue*);
 
 void swap_inicializar() {
     /// Inicializacion espacio SWAP ///
-    swapFile = open(ConfigMemoria.pathSwap, O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
-    ftruncate(swapFile, ConfigMemoria.tamanioSwap);
+    if (archivoExiste(ConfigMemoria.pathSwap))
+        remove(ConfigMemoria.pathSwap);
+
+    int swapFD = open(ConfigMemoria.pathSwap, O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    ftruncate(swapFD, ConfigMemoria.tamanioSwap);
+
+    swapFile = fopen(ConfigMemoria.pathSwap, "r+");
 
     if (sonIguales(ConfigMemoria.algoritmoReemplazo, "CLOCK"))
         seleccionarVictima = &seleccionarV_Clock;
@@ -35,8 +40,8 @@ uint32_t swap_resolver_pageFault(uint32_t pid, uint32_t idTabla, uint32_t numPag
     return frameAsignado;
 }
 
-uint32_t swap_in(uint32_t pid, t_pagina *pagina, uint32_t numMarco){
-    pagina->marco = numMarco == NULL ? asignar_frame_libre() : numMarco;
+uint32_t swap_in(uint32_t pid, t_pagina *pagina, uint32_t *numMarco){
+    pagina->marco = numMarco == NULL ? asignar_frame_libre() : *numMarco;
 
     void *paginaEnSwap = swap_leer_pagina(swapFile, pagina->posicion_swap);
     int posicion = pagina->marco * ConfigMemoria.tamanioPagina;
@@ -63,20 +68,21 @@ void swap_out(uint32_t pid, t_pagina *pagina){
     loggear_info(loggerMain, strOK, true);
 }
 
-void *swap_leer_pagina(int fd, uint32_t posicionSwap){
+void *swap_leer_pagina(FILE *swapFile, uint32_t posicionSwap){
+    fseek(swapFile, posicionSwap, SEEK_SET);
     void *buffer = malloc(ConfigMemoria.tamanioPagina);
-    pread(fd, buffer, ConfigMemoria.tamanioPagina, posicionSwap);
+    fread(buffer, ConfigMemoria.tamanioPagina, 1, swapFile);
     return buffer;
 }
 
-void swap_escribir_pagina(int fd, uint32_t posicionSwap, void *inicioPagina){
-    pwrite(fd, inicioPagina, ConfigMemoria.tamanioPagina, posicionSwap);
-    fsync(fd);
+void swap_escribir_pagina(FILE *swapFile, uint32_t posicionSwap, void *inicioPagina){
+    fseek(swapFile, posicionSwap, SEEK_SET);
+    fwrite(inicioPagina, ConfigMemoria.tamanioPagina, 1, swapFile);
+    fflush(swapFile);
 }
 
 void swap_cerrar() {
-    ftruncate(swapFile, 0);
-    close(swapFile);
+    fclose(swapFile);
 }
 
 
@@ -98,7 +104,7 @@ uint32_t reemplazarPagina(uint32_t pid, t_pagina *paginaReferida){
     pagVictima->presente = false;
     pagVictima->usado = false;
     
-    numFrame = swap_in(pid, paginaReferida, pagVictima->marco);
+    numFrame = swap_in(pid, paginaReferida, &pagVictima->marco);
     queue_push(qPaginasPresentes, paginaReferida);
 
     return numFrame;
@@ -131,7 +137,7 @@ t_pagina *seleccionarV_ClockMejorado(t_queue *qPaginasPresentes){
     do
     {
         //PASO 1 (u = 0, m = 0)
-        for (int p = 0; p < ConfigMemoria.cantidadMarcosMemoria; p++)
+        for (int p = 0; p < ConfigMemoria.marcosPorProceso; p++)
         {
             pagVictima = queue_pop(qPaginasPresentes);
             if (!pagVictima->usado && !pagVictima->modificado)
@@ -146,7 +152,7 @@ t_pagina *seleccionarV_ClockMejorado(t_queue *qPaginasPresentes){
         if (!paginaVictimaEncontrada)
         {
             //PASO 2 (u = 0, m = 1)
-            for (int p = 0; p < ConfigMemoria.cantidadMarcosMemoria; p++)
+            for (int p = 0; p < ConfigMemoria.marcosPorProceso; p++)
             {
                 pagVictima = queue_pop(qPaginasPresentes);
                 if (!pagVictima->usado && pagVictima->modificado)
@@ -177,4 +183,14 @@ bool memoria_esta_llena(){
 bool proceso_alcanzo_max_marcos(uint32_t pid){
     t_infoProceso *dataP = get_info_proceso(pid);
     return queue_size(dataP->paginasPresentes) == ConfigMemoria.marcosPorProceso;
+}
+
+bool archivoExiste(const char * fname){
+    FILE *file;
+    if (file = fopen(fname, "r"))
+    {
+        fclose(file);
+        return true;
+    }
+    return false;
 }
