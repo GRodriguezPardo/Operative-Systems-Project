@@ -2,24 +2,28 @@
 
 static void responder_OK(int socketFd, op_code code);
 
-void kernel_routine(int socketKernel, int* returnStatus) {
+void kernel_routine(int socketKernel, int *returnStatus)
+{
     recibir_handshake(socketKernel, INIT_KERNEL);
     responder_OK(socketKernel, INIT_MEMORIA);
-    t_segmento_pcb* segmentos;
-    void * msg;
 
-//    while (1) {
-        op_code operacion = recibir_operacion(socketKernel);
-        int __attribute_maybe_unused__ tamanioPaquete = largo_paquete(socketKernel);
-        uint32_t pid = recibir_uint32t(socketKernel);
-        uint32_t __attribute_maybe_unused__ cantidadSegmentos;
+    op_code operacion;
+    uint32_t pid;
+    uint32_t cantidadSegmentos;
+    t_segmento_pcb *segmentos;
+    void *msg;
+
+    while (1)
+    {
+        operacion = recibir_operacion(socketKernel);
+        (void) largo_paquete(socketKernel);
+        pid = recibir_uint32t(socketKernel);
 
         switch (operacion)
         {
-        case NUEVO_PROCESO:          
+        case NUEVO_PROCESO:
             cantidadSegmentos = recibir_uint32t(socketKernel);
-            msg = recibir(socketKernel);
-            segmentos = (t_segmento_pcb*)msg;
+            segmentos = (t_segmento_pcb *)recibir(socketKernel);
 
             t_paquete *packRespuesta = crear_paquete(NUEVO_PROCESO);
 
@@ -27,13 +31,20 @@ void kernel_routine(int socketKernel, int* returnStatus) {
             infoP->tablasProceso = list_create();
             infoP->paginasPresentes = queue_create();
 
+            //////////////// CREANDO TABLA DE PAGINAS POR SEGMENTO ////////////////
             for (uint32_t n = 0; n < cantidadSegmentos; n++)
             {
                 uint32_t _idTabla = pag_crearTablaPaginas(infoP->tablasProceso, segmentos[n].tamanio);
-                agregar_a_paquete(packRespuesta, (void *)&_idTabla, sizeof(uint32_t));
-                char *msg = string_from_format("Creacion de Tabla de Paginas -> PID: %d - Segmento: %d - TAMAÑO: %d páginas", pid, n, ConfigMemoria.paginasPorTabla);
-                loggear_info(loggerMain, msg, true);
+                (segmentos[n]).identificador_tabla = _idTabla;
+                {
+                    char *msg = string_from_format("Creacion de Tabla de Paginas -> PID: %d - Segmento: %d - TAMAÑO: %d páginas", pid, n, ConfigMemoria.paginasPorTabla);
+                    loggear_info(loggerMain, msg, true);
+                }
+                
             }
+            agregar_a_paquete(packRespuesta, (void*)&cantidadSegmentos, sizeof(uint32_t));
+            agregar_a_paquete(packRespuesta, (void*) segmentos, sizeof(t_segmento_pcb)*cantidadSegmentos);
+            ///////////////////////////////////////////////////////////////////////
 
             char *sPID = string_itoa(pid);
             pthread_mutex_lock(&mx_espacioTablasPag);
@@ -69,14 +80,15 @@ void kernel_routine(int socketKernel, int* returnStatus) {
             pthread_exit(returnStatus);
             break;
         }
-//    }
-    
+    }
+
     *returnStatus = EXIT_SUCCESS;
     pthread_mutex_unlock(&mx_main);
     pthread_exit(returnStatus);
 }
 
-void liberar_proceso(uint32_t pid){
+void liberar_proceso(uint32_t pid)
+{
     t_infoProceso *dataP;
 
     char *sPID = string_itoa(pid);
@@ -90,7 +102,8 @@ void liberar_proceso(uint32_t pid){
     free(dataP);
 }
 
-static void responder_OK(int socket, op_code code){
+static void responder_OK(int socket, op_code code)
+{
     t_paquete *pack = crear_paquete(code);
     enviar_paquete(pack, socket);
     eliminar_paquete(pack);

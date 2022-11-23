@@ -32,9 +32,9 @@ typedef struct mem_config
 } t_memoria_config;
 
 typedef struct t_segmento_pcb {
+    uint32_t nro_segmento;
     uint32_t tamanio;
     uint32_t identificador_tabla;
-    uint32_t nro_segmento;
 } t_segmento_pcb;
 
 typedef struct dataProceso
