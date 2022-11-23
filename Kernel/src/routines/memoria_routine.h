@@ -3,8 +3,10 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <thesenate/tcp_serializacion.h>
 #include "../globals.h"
 
+extern op_code global_memory_operation;
 extern t_pcb* global_pcb_to_memory;
 
 void *memoria_routine(void *config);

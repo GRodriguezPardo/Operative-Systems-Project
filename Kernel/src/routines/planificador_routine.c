@@ -2,6 +2,8 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <thesenate/tcp_serializacion.h>
+#include "memoria_routine.h"
 #include "planificador_routine.h"
 #include "../globals.h"
 #include "../kernel_utils.h"
@@ -36,11 +38,24 @@ void *new_a_ready(void *arg)
         sem_wait(&sem_grado_multiprogramacion);
 
         t_pcb *pcb = obtener_siguiente_en_new();
-        ingresar_a_ready(pcb, NUEVO_PROCESO);
+
+        {   /////////// INICIALIZANDO PROCESO EN MEMORIA ///////////
+            sem_wait(&sem_memory_handlers);
+            global_memory_operation = NUEVO_PROCESO;
+            global_pcb_to_memory = pcb;
+
+            sem_post(&sem_memory_routine);
+
+            sem_wait(&sem_memory_operation_resolved);
+
+            sem_post(&sem_memory_handlers);
+        }
 
         pthread_mutex_lock(&mutex_pcb_list);
         list_add(pcb_list, pcb);
         pthread_mutex_unlock(&mutex_pcb_list);
+
+        ingresar_a_ready(pcb, NUEVO_PROCESO);
 
         int val = 0;
         sem_getvalue(&sem_grado_multiprogramacion, &val);

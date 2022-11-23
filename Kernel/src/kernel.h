@@ -37,7 +37,7 @@ sem_t sem_interrupt_algorithms;
 
 sem_t sem_memory_handlers;
 sem_t sem_memory_routine;
-sem_t sem_memory_page_fault_resolved;
+sem_t sem_memory_operation_resolved;
 
 sem_t* sem_dispositivos_IO;
 

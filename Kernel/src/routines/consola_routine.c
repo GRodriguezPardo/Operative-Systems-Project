@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include "consola_routine.h"
 #include "planificador_routine.h"
+#include "memoria_routine.h"
 #include "../globals.h"
 #include "../kernel_utils.h"
 
@@ -164,6 +165,19 @@ void *consola_routine(void *param)
                 break;
             case EXIT:
                 logger_monitor_info(logger, "Finalizando.");
+
+                {   /////////// QUITANDO PROCESO DE MEMORIA ///////////
+                    sem_wait(&sem_memory_handlers);
+                    global_memory_operation = NUEVO_PROCESO;
+                    global_pcb_to_memory = mi_pcb;
+
+                    sem_post(&sem_memory_routine);
+
+                    sem_wait(&sem_memory_operation_resolved);
+
+                    sem_post(&sem_memory_handlers);
+                }
+                
                 pthread_mutex_lock(&mutex_pcb_list);
                 {
                     search_for_id_buffer = mi_pcb->id;
