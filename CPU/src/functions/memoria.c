@@ -81,8 +81,8 @@ void *memoria_routine(void *config){
             break;
         case MOV_IN_VALOR:
             configMemoria->pipelineMemoria.operacion = MOV_IN_VALOR;
-            configMemoria->pipelineMemoria.valor = *((uint32_t*)msg);
             msg = recibir(socket);
+            configMemoria->pipelineMemoria.valor = *((uint32_t*)msg);
             free(msg);
             msg = NULL;
             break;
