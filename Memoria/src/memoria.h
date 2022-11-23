@@ -14,9 +14,9 @@ t_config *config;
 t_log *loggerMain, *loggerAux;
 t_memoria_config ConfigMemoria;
 pthread_mutex_t mx_main, mx_loggerAux, mx_loggerMain, mx_espacioUsuario, 
-    mx_espacioTablasPag, mx_tablaFrames;
+    mx_espacioKernel, mx_tablaFrames;
 void *EspacioUsuario;
-t_dictionary *EspacioTablas;
+t_dictionary *EspacioKernel;
 t_bitarray *MapaFrames, *MapaSwap;
 t_dictionary *TablaFrames;
 

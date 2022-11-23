@@ -70,13 +70,12 @@ extern pthread_mutex_t mx_loggerMain;
 extern pthread_mutex_t mx_loggerAux;
 extern pthread_mutex_t mx_main;
 extern pthread_mutex_t mx_espacioUsuario;
-extern pthread_mutex_t mx_espacioTablasPag;
+extern pthread_mutex_t mx_espacioKernel;
 extern pthread_mutex_t mx_tablaFrames;
 extern void *EspacioUsuario;
-extern t_dictionary *EspacioTablas;
+extern t_dictionary *EspacioKernel;
 extern t_bitarray *MapaFrames;
 extern t_bitarray *MapaSwap;
 extern t_dictionary *TablaFrames;
-extern int swapFile;
 
 #endif /* MEMORIA_GLOBALS_H_ */

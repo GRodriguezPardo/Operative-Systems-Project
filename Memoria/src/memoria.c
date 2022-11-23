@@ -108,8 +108,8 @@ void inicializar_espacio_usuario(){
 }
 
 void inicializar_espacio_tablas(){
-    EspacioTablas = dictionary_create();
-    pthread_mutex_init(&mx_espacioTablasPag, NULL);
+    EspacioKernel = dictionary_create();
+    pthread_mutex_init(&mx_espacioKernel, NULL);
     loggear_info(loggerAux, "Espacio Kernel inicializado.", false);
 }
 
@@ -138,7 +138,7 @@ void inicializar_mapas(){
 }
 
 void destruir_espacio_tablas(){
-    dictionary_destroy_and_destroy_elements(EspacioTablas, &pag_destruirTablaPaginas);
+    dictionary_destroy_and_destroy_elements(EspacioKernel, &pag_destruirTablaPaginas);
 }
 
 void destruir_tabla_frames(){
@@ -152,7 +152,7 @@ void destruir_mapas(){
 
 void cerrarMutexes(){
     pthread_mutex_destroy(&mx_espacioUsuario);
-    pthread_mutex_destroy(&mx_espacioTablasPag);
+    pthread_mutex_destroy(&mx_espacioKernel);
     pthread_mutex_destroy(&mx_tablaFrames);
     pthread_mutex_destroy(&mx_main);
     pthread_mutex_destroy(&mx_loggerMain);
