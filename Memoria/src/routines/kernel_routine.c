@@ -47,9 +47,9 @@ void kernel_routine(int socketKernel, int *returnStatus)
 
             //////////////// AGREGANDO INFO PROCESO A DICCIONARIO ////////////////
             char *sPID = string_itoa(pid);
-            pthread_mutex_lock(&mx_espacioTablasPag);
-            dictionary_put(EspacioTablas, sPID, infoP);
-            pthread_mutex_unlock(&mx_espacioTablasPag);
+            pthread_mutex_lock(&mx_espacioKernel);
+            dictionary_put(EspacioKernel, sPID, infoP);
+            pthread_mutex_unlock(&mx_espacioKernel);
             free(sPID);
 
             enviar_paquete(packRespuesta, socketKernel);
@@ -93,9 +93,9 @@ void liberar_proceso(uint32_t pid)
     t_infoProceso *dataP;
 
     char *sPID = string_itoa(pid);
-    pthread_mutex_lock(&mx_espacioTablasPag);
-    dataP = (t_infoProceso *)dictionary_remove(EspacioTablas, sPID);
-    pthread_mutex_unlock(&mx_espacioTablasPag);
+    pthread_mutex_lock(&mx_espacioKernel);
+    dataP = (t_infoProceso *)dictionary_remove(EspacioKernel, sPID);
+    pthread_mutex_unlock(&mx_espacioKernel);
     free(sPID);
 
     queue_destroy(dataP->paginasPresentes);
