@@ -28,33 +28,36 @@ void *memoria_routine(void *config){
         sem_wait(&sem_conexion_memoria);
         switch (configMemoria->pipelineMemoria.operacion){
         case MOV_IN:
-         msgLog = "LEER";
-         paquete = crear_paquete(MOV_IN);
-         agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.direcFisica),sizeof(uint32_t));
-         enviar_paquete(paquete,socket);
-         eliminar_paquete(paquete);
-         break;
+            msgLog = "LEER";
+            paquete = crear_paquete(MOV_IN);
+            ///TODO: Agregar a paquete el process id.
+            agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.direcFisica),sizeof(uint32_t));
+            enviar_paquete(paquete,socket);
+            eliminar_paquete(paquete);
+            break;
         case MOV_OUT:
-         msgLog = "ESCRIBIR";
-         paquete = crear_paquete(MOV_OUT);
-         agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.direcFisica),sizeof(uint32_t));
-         agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.valor),sizeof(uint32_t));
-         enviar_paquete(paquete,socket);
-         eliminar_paquete(paquete);
-         break;
+            msgLog = "ESCRIBIR";
+            paquete = crear_paquete(MOV_OUT);
+            ///TODO: Agregar a paquete el process id.
+            agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.direcFisica),sizeof(uint32_t));
+            agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.valor),sizeof(uint32_t));
+            enviar_paquete(paquete,socket);
+            eliminar_paquete(paquete);
+            break;
         case MMU_MARCO:
-         msgLog = "BUSCAR MARCO";
-         paquete = crear_paquete(MMU_MARCO);
-         agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.idPagina),sizeof(uint32_t));
-         agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.idTablaPagina),sizeof(uint32_t));
-         enviar_paquete(paquete,socket);
-         eliminar_paquete(paquete);
-        break;
+            msgLog = "BUSCAR MARCO";
+            paquete = crear_paquete(MMU_MARCO);
+            ///TODO: Agregar a paquete el process id.
+            agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.idPagina),sizeof(uint32_t));
+            agregar_a_paquete(paquete,(void*)&(configMemoria->pipelineMemoria.idTablaPagina),sizeof(uint32_t));
+            enviar_paquete(paquete,socket);
+            eliminar_paquete(paquete);
+            break;
         default:
-         pthread_mutex_lock(&mutex_logger);
-         log_error(loggerMemoria,"Llego codigo desconocido a conexion con memoria");
-         pthread_mutex_unlock(&mutex_logger);
-        break;
+            pthread_mutex_lock(&mutex_logger);
+            log_error(loggerMemoria,"Llego codigo desconocido a conexion con memoria");
+            pthread_mutex_unlock(&mutex_logger);
+            break;
         }
 
         pthread_mutex_lock(&mutex_logger);
@@ -62,33 +65,35 @@ void *memoria_routine(void *config){
         pthread_mutex_unlock(&mutex_logger);
 
         codigo_operacion = recibir_operacion(socket);
-        tamanio_paquete = tamanio_restante = largo_paquete(socket);
+        (void) largo_paquete(socket);
+       
         switch (codigo_operacion)
         {
         case PAGE_FAULT:
-         configMemoria->pipelineMemoria.operacion = PAGE_FAULT;
-        break;
+            configMemoria->pipelineMemoria.operacion = PAGE_FAULT;
+            break;
         case MMU_MARCO:
-         configMemoria->pipelineMemoria.operacion = MMU_MARCO;
-         configMemoria->numMarco = *((uint32_t*)msg);
-         free(msg);
-         msg = NULL;
-        break;
+            configMemoria->pipelineMemoria.operacion = MMU_MARCO;
+            msg = recibir(socket);
+            configMemoria->numMarco = *((uint32_t*)msg);
+            free(msg);
+            msg = NULL;
+            break;
         case MOV_IN_VALOR:
-         configMemoria->pipelineMemoria.operacion = MOV_IN_VALOR;
-         configMemoria->pipelineMemoria.valor = *((uint32_t*)msg);
-         free(msg);
-         msg = NULL;
-        break;
+            configMemoria->pipelineMemoria.operacion = MOV_IN_VALOR;
+            configMemoria->pipelineMemoria.valor = *((uint32_t*)msg);
+            msg = recibir(socket);
+            free(msg);
+            msg = NULL;
+            break;
         case MOV_OUT_CONFIRMACION:
-         configMemoria->pipelineMemoria.operacion = MOV_OUT_CONFIRMACION;
-        break;
-               
+            configMemoria->pipelineMemoria.operacion = MOV_OUT_CONFIRMACION;
+            break;      
         default:
-         pthread_mutex_lock(&mutex_logger);
-         log_error(loggerMemoria,"Recibi codigo desconocido a conexion con memoria");
-         pthread_mutex_unlock(&mutex_logger);
-        break;
+            pthread_mutex_lock(&mutex_logger);
+            log_error(loggerMemoria,"Recibi codigo desconocido a conexion con memoria");
+            pthread_mutex_unlock(&mutex_logger);
+            break;
         }
         
         sem_post(&sem_mmu);
