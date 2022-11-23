@@ -10,13 +10,13 @@ void kernel_routine(int socketKernel, int *returnStatus)
     op_code operacion;
     uint32_t pid;
     uint32_t cantidadSegmentos;
-    t_segmento_pcb *segmentos;
+    t_segmento_pcb *segmentos = NULL;
     void *msg;
 
     while (1)
     {
         operacion = recibir_operacion(socketKernel);
-        (void) largo_paquete(socketKernel);
+        (void)largo_paquete(socketKernel);
         pid = recibir_uint32t(socketKernel);
 
         switch (operacion)
@@ -27,6 +27,7 @@ void kernel_routine(int socketKernel, int *returnStatus)
 
             t_paquete *packRespuesta = crear_paquete(NUEVO_PROCESO);
 
+            //////////////// CREANDO INFO PROCESO ////////////////
             t_infoProceso *infoP = (t_infoProceso *)malloc(sizeof(t_infoProceso));
             infoP->tablasProceso = list_create();
             infoP->paginasPresentes = queue_create();
@@ -40,12 +41,11 @@ void kernel_routine(int socketKernel, int *returnStatus)
                     char *msg = string_from_format("Creacion de Tabla de Paginas -> PID: %d - Segmento: %d - TAMAÑO: %d páginas", pid, n, ConfigMemoria.paginasPorTabla);
                     loggear_info(loggerMain, msg, true);
                 }
-                
             }
-            agregar_a_paquete(packRespuesta, (void*)&cantidadSegmentos, sizeof(uint32_t));
-            agregar_a_paquete(packRespuesta, (void*) segmentos, sizeof(t_segmento_pcb)*cantidadSegmentos);
-            ///////////////////////////////////////////////////////////////////////
+            agregar_a_paquete(packRespuesta, (void *)&pid, sizeof(uint32_t));
+            agregar_a_paquete(packRespuesta, (void *)segmentos, sizeof(t_segmento_pcb) * cantidadSegmentos);
 
+            //////////////// AGREGANDO INFO PROCESO A DICCIONARIO ////////////////
             char *sPID = string_itoa(pid);
             pthread_mutex_lock(&mx_espacioTablasPag);
             dictionary_put(EspacioTablas, sPID, infoP);
@@ -55,24 +55,25 @@ void kernel_routine(int socketKernel, int *returnStatus)
             enviar_paquete(packRespuesta, socketKernel);
             eliminar_paquete(packRespuesta);
 
-            free(msg);
-            msg = NULL;
+            free(segmentos);
+            segmentos = NULL;
 
             break;
         case EXIT_PROCESO:
             liberar_proceso(pid);
             responder_OK(socketKernel, EXIT_PROCESO);
-
-            char *msg = string_from_format("Destrucción de Tabla de Paginas -> PID: %d", pid);
-            loggear_info(loggerMain, msg, true);
+            {
+                char *msg = string_from_format("Destrucción de Tabla de Paginas -> PID: %d", pid);
+                loggear_info(loggerMain, msg, true);
+            }
             break;
-        case SWAP:
+        case PAGE_FAULT:
             uint32_t idTabla = recibir_uint32t(socketKernel);
             uint32_t numPagina = recibir_uint32t(socketKernel);
 
             uint32_t numFrame = swap_resolver_pageFault(pid, idTabla, numPagina);
             crearEntradaTablaFrames(numFrame, pid, idTabla, numPagina);
-            responder_OK(socketKernel, SWAP);
+            responder_OK(socketKernel, PAGE_FAULT);
             break;
         default:
             *returnStatus = EXIT_FAILURE;

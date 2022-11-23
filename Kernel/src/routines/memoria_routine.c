@@ -9,7 +9,6 @@
 #include "memoria_routine.h"
 
 op_code global_memory_operation;
-uint32_t global_pid_to_page_fault;
 uint32_t global_seg_to_page_fault;
 uint32_t global_page_to_page_fault;
 t_pcb *global_pcb_to_memory;
@@ -85,8 +84,8 @@ void enviar_a_memoria(int socket)
         break;
     case PAGE_FAULT:
         paquete = crear_paquete(PAGE_FAULT);
-        agregar_a_paquete(paquete, (void *)&global_pid_to_page_fault, sizeof(uint32_t));
-        agregar_a_paquete(paquete, (void *)&global_seg_to_page_fault, sizeof(uint32_t));
+        agregar_a_paquete(paquete, (void *)&(global_pcb_to_memory->id), sizeof(uint32_t));
+        agregar_a_paquete(paquete, (void *)&((global_pcb_to_memory->segmentos)[global_seg_to_page_fault]).identificador_tabla, sizeof(uint32_t));
         agregar_a_paquete(paquete, (void *)&global_page_to_page_fault, sizeof(uint32_t));
         break;
     case EXIT_PROCESO:
@@ -108,14 +107,28 @@ void enviar_a_memoria(int socket)
 
 void respuesta_memoria(int socket)
 {
+    uint32_t* pid = NULL;
     op_code operacion = recibir_operacion(socket);
     (void)largo_paquete(socket);
     switch (operacion)
     {
     case NUEVO_PROCESO:
+        pid = (uint32_t*)recibir(socket);
+        if((*pid) != global_pcb_to_memory->id)
+        {
+            { ////////////// LOGGEANDO //////////////
+                pthread_mutex_lock(&mutex_logger);
+                log_info(logger_memoria, "Error en memoria_routine: PID %u != PID %u.", *pid, global_pcb_to_memory->id);
+                pthread_mutex_unlock(&mutex_logger);
+            }   
+            exit(EXIT_FAILURE);
+        }
+        
+        free(global_pcb_to_memory->segmentos);
+        global_pcb_to_memory->segmentos=(t_segmento_pcb*)recibir(socket);
+        
         break;
     case PAGE_FAULT:
-        break;
     case EXIT_PROCESO:
         break;
     default:
@@ -150,7 +163,7 @@ void *page_fault_routine(void *param)
 
     sem_wait(&sem_memory_handlers);
     global_memory_operation = PAGE_FAULT;
-    global_pid_to_page_fault = pcb->id;
+    global_pcb_to_memory = pcb;
     global_seg_to_page_fault = seg_num;
     global_page_to_page_fault = page_num;
 
