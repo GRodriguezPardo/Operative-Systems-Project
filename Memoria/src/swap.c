@@ -187,7 +187,7 @@ bool proceso_alcanzo_max_marcos(uint32_t pid){
 
 bool archivoExiste(const char * fname){
     FILE *file;
-    if (file = fopen(fname, "r"))
+    if ((file = fopen(fname, "r")))
     {
         fclose(file);
         return true;

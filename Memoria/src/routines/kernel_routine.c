@@ -11,7 +11,6 @@ void kernel_routine(int socketKernel, int *returnStatus)
     uint32_t pid;
     uint32_t cantidadSegmentos;
     t_segmento_pcb *segmentos = NULL;
-    void *msg;
 
     while (1)
     {

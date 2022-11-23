@@ -213,16 +213,6 @@ t_pcb *obtener_y_actualizar_pcb_recibido(int socket)
             }
             free(regs);
         }
-        
-        {   /////// ACTUALIZANDO SEGMENTOS ///////
-            t_segmento_pcb *segmentos = NULL;
-            segmentos = (t_segmento_pcb *)recibir(socket);
-            for (size_t i = 0; i < (unPcb->cant_segmentos); i++)
-            {
-                unPcb->segmentos[i] = segmentos[i];
-            }
-            free(segmentos);
-        }
     }
     pthread_mutex_unlock(&mutex_pcb_list);
 

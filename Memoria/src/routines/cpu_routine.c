@@ -60,7 +60,6 @@ void cpu_routine(int socketFd, int *returnStatus)
             break;
         }
     }
-    return NULL;
 }
 
 void responder_handshakeCPU(int socket)

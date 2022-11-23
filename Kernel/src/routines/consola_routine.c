@@ -49,7 +49,6 @@ void *consola_routine(void *param)
     uint32_t  cant_segmentos;
     t_segmento_pcb* segmentos;
     
-
     {
         void *msg = NULL;
         msg = recibir(socket_cliente);
@@ -168,7 +167,7 @@ void *consola_routine(void *param)
 
                 {   /////////// QUITANDO PROCESO DE MEMORIA ///////////
                     sem_wait(&sem_memory_handlers);
-                    global_memory_operation = NUEVO_PROCESO;
+                    global_memory_operation = EXIT_PROCESO;
                     global_pcb_to_memory = mi_pcb;
 
                     sem_post(&sem_memory_routine);

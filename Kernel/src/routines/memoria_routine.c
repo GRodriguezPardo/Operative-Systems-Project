@@ -91,6 +91,7 @@ void enviar_a_memoria(int socket)
     case SEG_FAULT:
         paquete = crear_paquete(EXIT_PROCESO);
         agregar_a_paquete(paquete, (void *)&(global_pcb_to_memory->id), sizeof(uint32_t));
+        break;
     default:
         { ////////////// LOGGEANDO //////////////
             pthread_mutex_lock(&mutex_logger);
@@ -122,7 +123,7 @@ void respuesta_memoria(int socket)
             }   
             exit(EXIT_FAILURE);
         }
-        
+        free(pid);
         free(global_pcb_to_memory->segmentos);
         global_pcb_to_memory->segmentos=(t_segmento_pcb*)recibir(socket);
         
@@ -147,8 +148,8 @@ void page_fault_process(t_pcb *pcb, uint32_t seg_num, uint32_t page_num)
     {
         param = malloc(sizeof(uint32_t) * 2);
         *(t_pcb **)param = pcb;
-        *(uint32_t *)(param + sizeof(t_pcb *)) = seg_num;
-        *(uint32_t *)(param + sizeof(t_pcb *) + sizeof(uint32_t)) = page_num;
+        *((uint32_t *) (param + sizeof(t_pcb *))) = seg_num;
+        *((uint32_t *) (param + sizeof(t_pcb *) + sizeof(uint32_t))) = page_num;
     }
     pthread_t thread_id;
     pthread_create(&thread_id, NULL, page_fault_routine, param);
@@ -157,8 +158,8 @@ void page_fault_process(t_pcb *pcb, uint32_t seg_num, uint32_t page_num)
 void *page_fault_routine(void *param)
 {
     t_pcb *pcb = *(t_pcb **)param;
-    uint32_t seg_num = *(uint32_t *)(param + sizeof(t_pcb *));
-    uint32_t page_num = *(uint32_t *)(param + sizeof(t_pcb *) + sizeof(uint32_t));
+    uint32_t seg_num = *((uint32_t *) (param + sizeof(t_pcb *)));
+    uint32_t page_num = *((uint32_t *) (param + sizeof(t_pcb *) + sizeof(uint32_t)));
 
     sem_wait(&sem_memory_handlers);
     global_memory_operation = PAGE_FAULT;

@@ -66,6 +66,7 @@ void *atender_conexion(void *arg){
     default:
         break;
     }
+    return NULL;
 }
 
 void cargar_configuracion_memoria(){
