@@ -18,11 +18,13 @@
 #include "./functions/memoria.h"
 
 sem_t sem,sem_ciclo_instruccion,sem_envio_contexto;
+void remove_if_exists(const char *fname);
 
 int main(){
     t_config *config;
     config = config_create("../cpu.config");
     printf("%s\n", config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT"));
+    remove_if_exists("../cpu.log");
     t_log *logger = log_create("../cpu.log", "CPU - Main", 0, LOG_LEVEL_INFO);
     init_globals_cpu(config);
     pthread_t interrupt, dispatch, executer, memoria;
@@ -54,4 +56,12 @@ int main(){
     return 0;
 }
 
-
+void remove_if_exists(const char *fname)
+{
+    FILE *file;
+    if ((file = fopen(fname, "r")))
+    {
+        fclose(file);
+        remove(fname);
+    }
+}

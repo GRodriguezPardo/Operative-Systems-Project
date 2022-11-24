@@ -11,7 +11,7 @@
             "program": "${workspaceFolder}/Consola/Debug/consola",
             "additionalSOLibSearchPath": "${workspaceFolder}/Libreria",
             "args": [
-                "${workspaceFolder}/Consola/consola.config",
+                "${workspaceFolder}/Consola/Configs/consola.config",
                 "${workspaceFolder}/Consola/instrucciones.txt"
             ],
             "stopAtEntry": false,

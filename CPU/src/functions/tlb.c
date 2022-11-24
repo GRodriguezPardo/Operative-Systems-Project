@@ -8,6 +8,8 @@ void iniciar_estructuras(){
 }
 
 void agregar_entrada_tlb(uint32_t pid, uint32_t num_segmento, uint32_t num_pagina, uint32_t num_marco){
+    if(configMemoria->entradasTLB == 0) return;
+
     t_tlb *tlb = malloc(sizeof(t_tlb));
     tlb->pid = pid;
     tlb->nro_segmento = num_segmento;
@@ -25,8 +27,7 @@ void agregar_entrada_tlb(uint32_t pid, uint32_t num_segmento, uint32_t num_pagin
 
     pthread_mutex_lock(&mutex_logger);
     log_info(loggerTLB,"%d |PID: %d |SEGMENTO: %d |PAGINA: %d |MARCO: %d",tlb->nro_entrada,tlb->pid,tlb->nro_segmento,tlb->nro_pag,tlb->marco);
-    pthread_mutex_unlock(&mutex_logger);
-
+    pthread_mutex_unlock(&mutex_logger);   
 }
 
 int buscarEnTLB(uint32_t pid, uint32_t num_segmento, uint32_t num_pagina)

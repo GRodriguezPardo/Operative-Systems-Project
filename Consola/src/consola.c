@@ -131,5 +131,8 @@ int main(int argc, char **argv)
 
     liberar_conexion(socket);
 
+    char* aux = readline("Press anything to terminate...\n");
+    free(aux);
+
     return EXIT_SUCCESS;
 }

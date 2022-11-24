@@ -127,7 +127,7 @@ void *cpu_dispatch_routine(void *config)
 
                 {   ////////////// LOGGEANDO //////////////
                     pthread_mutex_lock(&mutex_logger);
-                    log_info(logger_dispatch, "Proceso %lu : EXEC -> EXIT (SEG_FAULT))", (unsigned long)(unPcb->id));
+                    log_info(logger_dispatch, "Proceso %lu : EXEC -> EXIT (SEG_FAULT)", (unsigned long)(unPcb->id));
                     pthread_mutex_unlock(&mutex_logger);
                 }
                 

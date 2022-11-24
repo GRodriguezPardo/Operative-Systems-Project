@@ -81,6 +81,7 @@ int iniciar_servidor(char *ip, char *puerto, void *(*start_routine)(void *))
 int iniciar_servidor_consolas(char *ip, char *puerto, void *(*start_routine)(void *), int **thread_identificator, uint8_t **thread_status)
 {
     *thread_identificator = (int*)calloc(1, sizeof(int));
+    **thread_identificator = 1;
     *thread_status = (uint8_t*)calloc(1,sizeof(uint8_t));
 
     int socket_servidor, client_sock, c;

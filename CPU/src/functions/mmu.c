@@ -12,7 +12,7 @@ bool chequearPageFault(t_configMemoria* configMemoria, t_log* loggerMMU, uint32_
 }
 
 uint32_t calcularDirecFisica(uint32_t marco, uint32_t desplazamiento_pag){
-    return marco + desplazamiento_pag;
+    return marco * (configMemoria->tamanioPagina) + desplazamiento_pag;
 }
 
 void buscarMarco(uint32_t nroSegmento, uint32_t idPagina){

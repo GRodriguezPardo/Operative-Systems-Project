@@ -1,9 +1,13 @@
 #include "memoria.h"
 
+void remove_if_exists(const char *fname);
+
 int main(int argc, char** argv){
+    remove_if_exists("../memoriaMain.log");
     loggerMain = log_create("../memoriaMain.log", "Memoria - Main", false, LOG_LEVEL_INFO);
     pthread_mutex_init(&mx_loggerMain, NULL);
 
+    remove_if_exists("../memoriaAuxiliares.log");
     loggerAux = log_create("../memoriaAuxiliares.log", "Memoria - Auxiliares", true, LOG_LEVEL_INFO);
     pthread_mutex_init(&mx_loggerAux, NULL);
 
@@ -158,4 +162,14 @@ void cerrarMutexes(){
     pthread_mutex_destroy(&mx_main);
     pthread_mutex_destroy(&mx_loggerMain);
     pthread_mutex_destroy(&mx_loggerAux);
+}
+
+void remove_if_exists(const char *fname)
+{
+    FILE *file;
+    if ((file = fopen(fname, "r")))
+    {
+        fclose(file);
+        remove(fname);
+    }
 }

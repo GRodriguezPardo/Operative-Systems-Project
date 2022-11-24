@@ -17,11 +17,14 @@
 #include "routines/memoria_routine.h"
 #include "globals.h"
 
+void remove_if_exists(const char *fname);
+
 int main(int argc, char** argv)
 {
     pthread_t memoria, cpu_dispatch, cpu_interrupt, planificador_largo;
 
     ////////////// INICIANDO CONFIG Y LOGGER //////////////
+    remove_if_exists("../kernel.log");
     t_config *config = config_create("../kernel.config");
     t_log *logger = log_create("../kernel.log", "Kernel - Main", 0, LOG_LEVEL_INFO);
 
@@ -108,4 +111,14 @@ int main(int argc, char** argv)
     finalizar_kernel(config, logger);
 
     return EXIT_SUCCESS;
+}
+
+void remove_if_exists(const char *fname)
+{
+    FILE *file;
+    if ((file = fopen(fname, "r")))
+    {
+        fclose(file);
+        remove(fname);
+    }
 }
