@@ -55,6 +55,7 @@ extern int flag_interrupcion;
 extern int flag_segFault;
 extern int flag_pageFault;
 
+extern t_log* loggerMMU;
 
 extern t_contexto *mi_contexto;
 
@@ -81,6 +82,5 @@ extern sem_t sem_ciclo_instruccion;
 extern sem_t sem_envio_contexto;
 extern sem_t sem_conexion_memoria;
 extern sem_t sem_mmu;
-
 
 #endif 

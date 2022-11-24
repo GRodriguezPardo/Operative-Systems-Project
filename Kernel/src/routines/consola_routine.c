@@ -108,7 +108,7 @@ void *consola_routine(void *param)
 
     ////////////// QUEDANDO A LA ESPERA DE INSTRUCCIONES //////////////
     {
-        t_paquete *paquete;
+        t_paquete *paquete = NULL;
         uint32_t *input = NULL;
         int __attribute__((unused)) tamanio_paquete;
 

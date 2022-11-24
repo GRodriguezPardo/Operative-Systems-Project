@@ -80,11 +80,15 @@ void pcb_element_destroyer(void *arg)
 {
     t_pcb *elem = (t_pcb *)arg;
     sem_close(&(elem->console_semaphore));
+    sem_close(&(elem->console_waiter_semaphore));
+    sem_destroy(&(elem->console_semaphore));
+    sem_destroy(&(elem->console_waiter_semaphore));
     for (size_t i = 0; i < elem->cant_instrucciones; i++)
     {
         free((elem->instrucciones)[i]);
     }
 
+    free(elem->segmentos);
     free(elem->instrucciones);
     free(elem);
 }

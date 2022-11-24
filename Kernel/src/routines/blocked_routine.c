@@ -20,6 +20,7 @@ void bloquear_proceso(t_pcb* unPcb, char* dispositivo, uint32_t unidades)
 
     pthread_t thread_id;
     pthread_create(&thread_id, NULL, blocked_process_routine, param);
+    pthread_detach(thread_id);
 
     return;
 }

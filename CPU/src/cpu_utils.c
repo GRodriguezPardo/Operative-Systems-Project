@@ -12,6 +12,12 @@
 
 void init_globals_cpu(t_config *config)
 {
+    {
+        char buffer[25];
+        sprintf(buffer, "Cpu - MMU");
+        loggerMMU = log_create("../cpu.log", buffer, 0, LOG_LEVEL_INFO);
+    }
+    
     int entradasTLB = config_get_int_value((t_config*) config, "ENTRADAS_TLB");
 
     reemplazo_tlb = config_get_string_value((t_config*) config, "REEMPLAZO_TLB");

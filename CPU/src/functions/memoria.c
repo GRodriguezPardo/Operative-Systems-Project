@@ -61,7 +61,27 @@ void *memoria_routine(void *config){
         }
 
         pthread_mutex_lock(&mutex_logger);
-        log_info(loggerMemoria,"PID: %d - Acción: %s - Segmento: %d - Pagina: %d - Dirección Fisica: %d",mi_contexto->id,msgLog,configMemoria->numSegActual,configMemoria->numPagActual,configMemoria->pipelineMemoria.direcFisica);
+        if((configMemoria->pipelineMemoria.operacion) == MMU_MARCO)
+        {
+            log_info(
+                loggerMemoria,
+                "PID: %d - Acción: %s - Segmento: %d - Pagina: %d",
+                mi_contexto->id,
+                msgLog,
+                configMemoria->numSegActual,
+                configMemoria->numPagActual
+            );
+        } else {
+            log_info(
+                loggerMemoria,
+                "PID: %d - Acción: %s - Segmento: %d - Pagina: %d - Dirección Fisica: %d",
+                mi_contexto->id,
+                msgLog,
+                configMemoria->numSegActual,
+                configMemoria->numPagActual,
+                configMemoria->pipelineMemoria.direcFisica
+            );
+        }
         pthread_mutex_unlock(&mutex_logger);
 
         codigo_operacion = recibir_operacion(socket);

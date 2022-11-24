@@ -77,6 +77,7 @@ int main(int argc, char** argv)
         perror("Error: Memoria thread failed.\n");
         logger_monitor_error(logger, "Error: Memoria thread failed.");
     }
+    pthread_detach(memoria);
 
     logger_monitor_info(logger, "Conectando a CPU-Dispatch.");
     if (pthread_create(&cpu_dispatch, NULL, cpu_dispatch_routine, (void *) config) < 0)
@@ -84,6 +85,7 @@ int main(int argc, char** argv)
         perror("Error: CPU-Dispatch thread failed.\n");
         logger_monitor_error(logger, "Error: CPU-Dispatch thread failed.");
     }
+    pthread_detach(cpu_dispatch);
 
     logger_monitor_info(logger, "Conectando a CPU-Interrupt.");
     if (pthread_create(&cpu_interrupt, NULL, cpu_interrupt_routine, (void *) config) < 0)
@@ -91,13 +93,15 @@ int main(int argc, char** argv)
         perror("Error: CPU-Interrupt thread failed.\n");
         logger_monitor_error(logger, "Error: CPU-Interrupt thread failed.");
     }
+    pthread_detach(cpu_interrupt);
 
     logger_monitor_info(logger, "Iniciando planificador de largo plazo.");
     if (pthread_create(&planificador_largo, NULL, new_a_ready, NULL) < 0)
     {
         perror("Error: Long-term planner thread failed.\n");
         logger_monitor_error(logger, "Error: Long-term planner thread failed.");
-    } 
+    }
+    pthread_detach(planificador_largo);
     
     ////////////// CREANDO SERVER DE CONSOLAS //////////////
     char* puertoServidor = config_get_string_value(config, "PUERTO_ESCUCHA");

@@ -8,7 +8,7 @@ int main(int argc, char** argv){
     pthread_mutex_init(&mx_loggerMain, NULL);
 
     remove_if_exists("../memoriaAuxiliares.log");
-    loggerAux = log_create("../memoriaAuxiliares.log", "Memoria - Auxiliares", true, LOG_LEVEL_INFO);
+    loggerAux = log_create("../memoriaAuxiliares.log", "Memoria - Auxiliares", false, LOG_LEVEL_INFO);
     pthread_mutex_init(&mx_loggerAux, NULL);
 
     loggear_info(loggerAux, "Iniciando módulo memoria...", false);

@@ -47,14 +47,6 @@ op_code traducciones(op_code instruccion){
     direcFisica, direcLogica;
     bool pageFault;
 
-    t_log* loggerMMU;
-    {
-        char buffer[25];
-        sprintf(buffer, "Cpu - MMU");
-        loggerMMU = log_create("../cpu.log", buffer, 0, LOG_LEVEL_INFO);
-    }
-
-
     direcLogica = configMemoria->pipelineMemoria.direcLogica;
 
 
@@ -66,7 +58,7 @@ op_code traducciones(op_code instruccion){
     //chequear que el desplazamiento_segmento sea menor que el tam max del segmento
     //si no se cumple mandar a kernel y seg fault
 
-    if(num_segmento >= mi_contexto->cantSegmentos || desplazamiento_segmento > mi_contexto->segmentos[num_segmento].tamanio){
+    if(num_segmento >= mi_contexto->cantSegmentos || desplazamiento_segmento >= mi_contexto->segmentos[num_segmento].tamanio){
         return SEG_FAULT; 
     }
 

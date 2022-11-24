@@ -1,6 +1,8 @@
 #ifndef KERNEL_H_
 #define KERNEL_H_
 
+t_log* loggerMMU;
+
 t_contexto *mi_contexto;
 t_configMemoria *configMemoria;
 

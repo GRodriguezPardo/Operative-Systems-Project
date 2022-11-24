@@ -57,6 +57,7 @@ t_pcb *rr_obtener_siguiente_exec()
         *id = pcb->id;
     }
     pthread_create(&last_clock_id_rr, NULL, rr_clock_interrupt, (void *)id);
+    pthread_detach(last_clock_id_rr);
 
     return pcb;
 }

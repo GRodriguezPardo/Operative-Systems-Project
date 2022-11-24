@@ -82,6 +82,7 @@ t_pcb *feedback_obtener_siguiente_exec()
             *id = pcb->id;
         }
         pthread_create(&last_clock_id_fb, NULL, feedback_clock_interrupt, (void *)id);
+        pthread_detach(last_clock_id_fb);
         is_rr = 1;
     }
     else

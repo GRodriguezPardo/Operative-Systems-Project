@@ -146,13 +146,14 @@ void page_fault_process(t_pcb *pcb, uint32_t seg_num, uint32_t page_num)
 {
     void *param;
     {
-        param = malloc(sizeof(uint32_t) * 2);
+        param = malloc(sizeof(t_pcb *) + sizeof(uint32_t) * 2);
         *(t_pcb **)param = pcb;
         *((uint32_t *) (param + sizeof(t_pcb *))) = seg_num;
         *((uint32_t *) (param + sizeof(t_pcb *) + sizeof(uint32_t))) = page_num;
     }
     pthread_t thread_id;
     pthread_create(&thread_id, NULL, page_fault_routine, param);
+    pthread_detach(thread_id);
 }
 
 void *page_fault_routine(void *param)
