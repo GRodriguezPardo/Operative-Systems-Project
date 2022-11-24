@@ -73,18 +73,18 @@ void kernel_routine(int socketKernel, int *returnStatus)
             uint32_t numFrame = swap_resolver_pageFault(pid, idTabla, numPagina);
             crearEntradaTablaFrames(numFrame, pid, idTabla, numPagina);
             responder_OK(socketKernel, PAGE_FAULT);
+
+            char *msg = string_from_format("Kernel :: Carga de pagina en memoria -> PID: %u - Segmento: %u - Pagina: %u - Marco: %u", pid, idTabla, numPagina, numFrame);
+            loggear_info(loggerAux, msg, true);
             break;
         default:
-            *returnStatus = EXIT_FAILURE;
-            pthread_mutex_unlock(&mx_main);
-            pthread_exit(returnStatus);
-            break;
+            loggear_error(loggerMain, "Kernel :: Operacion desconocida", false);
+
+            exit(EXIT_FAILURE);
         }
     }
 
-    *returnStatus = EXIT_SUCCESS;
-    pthread_mutex_unlock(&mx_main);
-    pthread_exit(returnStatus);
+    return;
 }
 
 void liberar_proceso(uint32_t pid)

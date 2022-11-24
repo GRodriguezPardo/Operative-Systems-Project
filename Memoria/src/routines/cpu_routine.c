@@ -25,6 +25,9 @@ void cpu_routine(int socketFd, int *returnStatus)
             marcarPaginaUsada(direccionFisica, false);
             char *msgLeer = string_from_format("Acceso a espacio de usuario: PID: %d - Acción: LEER - Dirección física: %d", pid, direccionFisica);
             loggear_info(loggerMain, msgLeer, true);
+
+            msgLeer = string_from_format("CPU :: PID: %u - Acción: LEER - Dirección física: %u - Valor Leido: %u", pid, direccionFisica, valorLeido);
+            loggear_info(loggerAux, msgLeer, true);
             break;
         case MOV_OUT:
             direccionFisica = recibir_uint32t(socketFd);         // recibo la direccion
@@ -35,6 +38,9 @@ void cpu_routine(int socketFd, int *returnStatus)
             marcarPaginaUsada(direccionFisica, true);
             char *msgEscribir = string_from_format("Acceso a espacio de usuario: PID: %d - Acción: ESCRIBIR - Dirección física: %d", pid, direccionFisica);
             loggear_info(loggerMain, msgEscribir, true);
+
+            msgEscribir = string_from_format("CPU :: PID: %u - Acción: ESCRIBIR - Dirección física: %u - Valor Escrito: %u", pid, direccionFisica, valorAEscribir);
+            loggear_info(loggerAux, msgEscribir, true);
             break;
         case MMU_MARCO:
             uint32_t numPagina = recibir_uint32t(socketFd);
@@ -44,17 +50,22 @@ void cpu_routine(int socketFd, int *returnStatus)
             if (pag_obtenerMarcoPagina(pid, idTabla, numPagina, &marco) == -1)
             {
                 responder_cpu(socketFd, PAGE_FAULT, NULL);
+
+                char *msg = string_from_format("Acceso a Tabla de Páginas: PID: %u - Página: %u -> PAGE FAULT", pid, numPagina);
+                loggear_info(loggerAux, msg, true);
             }
             else
             {
                 responder_cpu(socketFd, MMU_MARCO, &marco);
 
-                char *msg = string_from_format("Acceso a Tabla de Páginas: PID: %d - Página: %d - Marco: %d", pid, numPagina, marco);
+                char *msg = string_from_format("Acceso a Tabla de Páginas: PID: %u - Página: %u - Marco: %u", pid, numPagina, marco);
                 loggear_info(loggerMain, msg, true);
             }
 
             break;
         default:
+            loggear_error(loggerAux, "CPU :: Operacion desconocida", false);
+
             pthread_mutex_unlock(&mx_main);
             exit(EXIT_FAILURE);
             break;
@@ -71,7 +82,7 @@ void responder_handshakeCPU(int socket)
     enviar_paquete(pack, socket);
     eliminar_paquete(pack);
 
-    char *msg = string_from_format("CPU Thread :: entradasPorTabla: %d // tamanioPagina: %d enviados.", ConfigMemoria.paginasPorTabla, ConfigMemoria.tamanioPagina);
+    char *msg = string_from_format("CPU :: entradasPorTabla: %u // tamanioPagina: %u enviados.", ConfigMemoria.paginasPorTabla, ConfigMemoria.tamanioPagina);
     loggear_info(loggerAux, msg, true);
 }
 
@@ -93,7 +104,7 @@ void escribir_memoria(uint32_t offset, uint32_t valor)
     pthread_mutex_unlock(&mx_espacioUsuario);
 }
 
-void marcarPaginaUsada(uint32_t direccion, bool fueModificada)
+void marcarPaginaUsada(uint32_t direccion, bool esEscritura)
 {
     t_pagina *paginaUsada;
 
@@ -107,7 +118,8 @@ void marcarPaginaUsada(uint32_t direccion, bool fueModificada)
     }
 
     paginaUsada->usado = true;
-    paginaUsada->modificado = fueModificada;
+    if(esEscritura)
+        paginaUsada->modificado = true;
 }
 
 void responder_cpu(int socket, op_code code, uint32_t *valor)

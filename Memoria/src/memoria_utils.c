@@ -114,6 +114,9 @@ void crearEntradaTablaFrames(uint32_t numFrame, uint32_t pid, uint32_t idTabla, 
     char *sNumFrame = string_itoa(numFrame);
     dictionary_put(TablaFrames, sNumFrame, paginaNueva);
     free(sNumFrame);
+
+    char *msg = string_from_format("Creando entrada en Tabla de Frames -> Frame: %u PID: %u Segmento: %u Pagina: %u", numFrame, pid, paginaNueva->numeroSegmento, numPagina);
+    loggear_info(loggerAux, msg, true);
 }
 
 void borrarEntradaTablaFrames(uint32_t numFrame){
@@ -122,4 +125,7 @@ void borrarEntradaTablaFrames(uint32_t numFrame){
         dictionary_remove(TablaFrames, sNumFrame);
     }
     free(sNumFrame);
+
+    char *msg = string_from_format("Borrando entrada en Tabla de Frames -> Frame: %u", numFrame);
+    loggear_info(loggerAux, msg, true);
 }
