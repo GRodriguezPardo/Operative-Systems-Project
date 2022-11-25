@@ -34,6 +34,7 @@ src/%.o: ../src/%.c src/subdir.mk
 src/functions/%.o: ../src/functions/%.c src/subdir.mk
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C Compiler'
+	mkdir -p src/functions
 	gcc -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '

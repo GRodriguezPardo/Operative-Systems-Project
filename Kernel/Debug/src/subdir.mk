@@ -33,6 +33,7 @@ src/%.o: ../src/%.c src/subdir.mk
 src/routines/%.o: ../src/routines/%.c src/subdir.mk
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C Compiler'
+	mkdir -p src/routines
 	gcc -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
@@ -40,6 +41,7 @@ src/routines/%.o: ../src/routines/%.c src/subdir.mk
 src/algorithms/%.o: ../src/algorithms/%.c src/subdir.mk
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C Compiler'
+	mkdir -p src/algorithms
 	gcc -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
